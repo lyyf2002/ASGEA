@@ -4,12 +4,12 @@ import time
 
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ExponentialLR
-from models import RED_GNN_induc
+from models import MASGNN
 from utils import cal_ranks, cal_performance
 
 class BaseModel(object):
     def __init__(self, args, loader):
-        self.model = RED_GNN_induc(args, loader)
+        self.model = MASGNN(args, loader)
         self.model.cuda()
 
         self.loader = loader
@@ -83,6 +83,6 @@ class BaseModel(object):
         t_mrr, t_h1, t_h10 = cal_performance(ranking)
         i_time = time.time() - i_time
 
-        out_str = '[VALID] MRR:%.4f H@1:%.4f H@10:%.4f\t [TEST] MRR:%.4f H@1:%.4f H@10:%.4f \t[TIME] train:%.4f inference:%.4f\n'%(v_mrr, v_h1, v_h10, t_mrr, t_h1, t_h10, self.t_time, i_time)
+        out_str = '[TEST] MRR:%.4f H@1:%.4f H@10:%.4f \t[TIME] inference:%.4f\n'%(t_mrr, t_h1, t_h10, i_time)
         return out_str
 
