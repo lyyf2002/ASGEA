@@ -37,18 +37,18 @@ class Collator_base(object):
         return np.array(batch)
 
 
-def load_data(logger, args):
-    assert args.data_choice in ["DWY", "DBP15K", "FBYG15K", "FBDB15K"]
-    if args.data_choice in ["DWY", "DBP15K", "FBYG15K", "FBDB15K"]:
-        KGs, non_train, train_ill, test_ill, eval_ill, test_ill_ = load_eva_data(logger, args)
+# def load_data(logger, args):
+#     assert args.data_choice in ["DWY", "DBP15K", "FBYG15K", "FBDB15K"]
+#     if args.data_choice in ["DWY", "DBP15K", "FBYG15K", "FBDB15K"]:
+#         KGs, non_train, train_ill, test_ill, eval_ill, test_ill_ = load_eva_data(logger, args)
+#
+#     elif args.data_choice in ["FBYG15K_attr", "FBDB15K_attr"]:
+#         pass
+#
+#     return KGs, non_train, train_ill, test_ill, eval_ill, test_ill_
+#
 
-    elif args.data_choice in ["FBYG15K_attr", "FBDB15K_attr"]:
-        pass
-
-    return KGs, non_train, train_ill, test_ill, eval_ill, test_ill_
-
-
-def load_eva_data(logger, args):
+def load_eva_data(args):
     file_dir = osp.join(args.data_path, args.data_choice, args.data_split)
     lang_list = [1, 2]
     ent2id_dict, ills, triples, r_hs, r_ts, ids = read_raw_data(file_dir, lang_list)
@@ -73,8 +73,8 @@ def load_eva_data(logger, args):
         img_vec_path = osp.join(args.data_path, "pkls", args.data_split + "_GA_id_img_feature_dict.pkl")
 
     assert osp.exists(img_vec_path)
-    img_features = load_img(logger, ENT_NUM, img_vec_path)
-    logger.info(f"image feature shape:{img_features.shape}")
+    img_features = load_img(ENT_NUM, img_vec_path)
+    print(f"image feature shape:{img_features.shape}")
 
     if args.word_embedding == "glove":
         word2vec_path = os.path.join(args.data_path, "embedding", "glove.6B.300d.txt")
@@ -88,11 +88,11 @@ def load_eva_data(logger, args):
     if args.data_choice == "DBP15K" and (args.w_name or args.w_char):
 
         assert osp.exists(word2vec_path)
-        ent_vec, char_features = load_word_char_features(ENT_NUM, word2vec_path, args, logger)
+        ent_vec, char_features = load_word_char_features(ENT_NUM, word2vec_path, args)
         name_features = F.normalize(torch.Tensor(ent_vec))
         char_features = F.normalize(torch.Tensor(char_features))
-        logger.info(f"name feature shape:{name_features.shape}")
-        logger.info(f"char feature shape:{char_features.shape}")
+        print(f"name feature shape:{name_features.shape}")
+        print(f"char feature shape:{char_features.shape}")
 
     if args.unsup:
         mode = args.unsup_mode
@@ -103,7 +103,7 @@ def load_eva_data(logger, args):
         else:
             input_features = F.normalize(torch.Tensor(img_features))
 
-        train_ill = visual_pivot_induction(args, left_ents, right_ents, input_features, ills, logger)
+        train_ill = visual_pivot_induction(args, left_ents, right_ents, input_features, ills)
     else:
         train_ill = np.array(ills[:int(len(ills) // 1 * args.data_rate)], dtype=np.int32)
 
@@ -117,30 +117,29 @@ def load_eva_data(logger, args):
 
     right_non_train = list(set(right_ents) - set(train_ill[:, 1].tolist()))
 
-    logger.info(f"#left entity : {len(left_ents)}, #right entity: {len(right_ents)}")
-    logger.info(f"#left entity not in train set: {len(left_non_train)}, #right entity not in train set: {len(right_non_train)}")
+    print(f"#left entity : {len(left_ents)}, #right entity: {len(right_ents)}")
+    print(f"#left entity not in train set: {len(left_non_train)}, #right entity not in train set: {len(right_non_train)}")
 
     rel_features = load_relation(ENT_NUM, triples, 1000)
-    logger.info(f"relation feature shape:{rel_features.shape}")
+    print(f"relation feature shape:{rel_features.shape}")
     a1 = os.path.join(file_dir, 'training_attrs_1')
     a2 = os.path.join(file_dir, 'training_attrs_2')
     att_features = load_attr([a1, a2], ENT_NUM, ent2id_dict, 1000)  # attr
-    logger.info(f"attribute feature shape:{att_features.shape}")
-
-    logger.info("-----dataset summary-----")
-    logger.info(f"dataset:\t\t {file_dir}")
-    logger.info(f"triple num:\t {len(triples)}")
-    logger.info(f"entity num:\t {ENT_NUM}")
-    logger.info(f"relation num:\t {REL_NUM}")
-    logger.info(f"train ill num:\t {train_ill.shape[0]} \t test ill num:\t {test_ill.shape[0]}")
-    logger.info("-------------------------")
+    print(f"attribute feature shape:{att_features.shape}")
+    print("-----dataset summary-----")
+    print(f"dataset:\t\t {file_dir}")
+    print(f"triple num:\t {len(triples)}")
+    print(f"entity num:\t {ENT_NUM}")
+    print(f"relation num:\t {REL_NUM}")
+    print(f"train ill num:\t {train_ill.shape[0]} \t test ill num:\t {test_ill.shape[0]}")
+    print("-------------------------")
 
     eval_ill = None
     input_idx = torch.LongTensor(np.arange(ENT_NUM))
-    adj = get_adjr(ENT_NUM, triples, norm=True)
+
     # pdb.set_trace()
-    train_ill = EADataset(train_ill)
-    test_ill = EADataset(test_ill)
+    # train_ill = EADataset(train_ill)
+    # test_ill = EADataset(test_ill)
 
     return {
         'ent_num': ENT_NUM,
@@ -151,8 +150,8 @@ def load_eva_data(logger, args):
         'name_features': name_features,
         'char_features': char_features,
         'input_idx': input_idx,
-        'adj': adj
-    }, {"left": left_non_train, "right": right_non_train}, train_ill, test_ill, eval_ill, test_ill_
+        'triples': triples
+    }, {"left": left_non_train, "right": right_non_train},left_ents,right_ents, train_ill, test_ill, eval_ill, test_ill_
 
 
 def load_word2vec(path, dim=300):
@@ -201,7 +200,7 @@ def load_char_bigram(path):
     return ent_names, char2id
 
 
-def load_word_char_features(node_size, word2vec_path, args, logger):
+def load_word_char_features(node_size, word2vec_path, args):
     """
     node_size : ent num
     """
@@ -210,9 +209,9 @@ def load_word_char_features(node_size, word2vec_path, args, logger):
     save_path_name = os.path.join(args.data_path, "embedding", f"dbp_{args.data_split}_name.pkl")
     save_path_char = os.path.join(args.data_path, "embedding", f"dbp_{args.data_split}_char.pkl")
     if osp.exists(save_path_name) and osp.exists(save_path_char):
-        logger.info(f"load entity name emb from {save_path_name} ... ")
+        print(f"load entity name emb from {save_path_name} ... ")
         ent_vec = pickle.load(open(save_path_name, "rb"))
-        logger.info(f"load entity char emb from {save_path_char} ... ")
+        print(f"load entity char emb from {save_path_char} ... ")
         char_vec = pickle.load(open(save_path_char, "rb"))
         return ent_vec, char_vec
 
@@ -246,11 +245,11 @@ def load_word_char_features(node_size, word2vec_path, args, logger):
         pickle.dump(ent_vec, f)
     with open(save_path_char, 'wb') as f:
         pickle.dump(char_vec, f)
-    logger.info("save entity emb done. ")
+    print("save entity emb done. ")
     return ent_vec, char_vec
 
 
-def visual_pivot_induction(args, left_ents, right_ents, img_features, ills, logger):
+def visual_pivot_induction(args, left_ents, right_ents, img_features, ills):
 
     l_img_f = img_features[left_ents]  # left images
     r_img_f = img_features[right_ents]  # right images
@@ -279,8 +278,8 @@ def visual_pivot_induction(args, left_ents, right_ents, img_features, ills, logg
     for link in visual_links:
         if link in ills:
             count = count + 1
-    logger.info(f"{(count / len(visual_links) * 100):.2f}% in true links")
-    logger.info(f"visual links length: {(len(visual_links))}")
+    print(f"{(count / len(visual_links) * 100):.2f}% in true links")
+    print(f"visual links length: {(len(visual_links))}")
     train_ill = np.array(visual_links, dtype=np.int32)
     return train_ill
 
@@ -428,7 +427,7 @@ def load_json_embd(path):
     return embd_dict
 
 
-def load_img(logger, e_num, path):
+def load_img(e_num, path):
     img_dict = pickle.load(open(path, "rb"))
     # init unknown img vector with mean and std deviation of the known's
     imgs_np = np.array(list(img_dict.values()))
@@ -438,5 +437,5 @@ def load_img(logger, e_num, path):
     # img_embd = np.array([img_dict[i] if i in img_dict else np.zeros_like(img_dict[0]) for i in range(e_num)])
 
     img_embd = np.array([img_dict[i] if i in img_dict else np.random.normal(mean, std, mean.shape[0]) for i in range(e_num)])
-    logger.info(f"{(100 * len(img_dict) / e_num):.2f}% entities have images")
+    print(f"{(100 * len(img_dict) / e_num):.2f}% entities have images")
     return img_embd

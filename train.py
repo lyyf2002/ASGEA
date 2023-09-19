@@ -1,6 +1,54 @@
-
+import os
 import argparse
-parser = argparse.ArgumentParser()
+
+import torch
+import numpy as np
+from load_data import DataLoader
+from base_model import BaseModel
+import time
+from collections import OrderedDict
+
+parser = argparse.ArgumentParser(description="Parser for MASEA")
+parser.add_argument('--data_path', type=str, default='data/DTI_few1')
+parser.add_argument('--seed', type=str, default=1234)
+parser.add_argument('--gpu', type=int, default=0)
+parser.add_argument('--perf_file', type=str, default='perf.txt')
+parser.add_argument('--lr', type=float, default=0.001)
+parser.add_argument('--lamb', type=float, default=0.0002)
+parser.add_argument('--decay_rate', type=float, default=0.991)
+parser.add_argument('--hidden_dim', type=int, default=64)
+parser.add_argument('--attn_dim', type=int, default=5)
+parser.add_argument('--dropout', type=float, default=0.2)
+parser.add_argument('--act', type=str, default='relu')
+parser.add_argument('--n_layer', type=int, default=4)
+parser.add_argument('--n_batch', type=int, default=10)
+parser.add_argument("--lamda", type=float, default=0.5)
+
+parser.add_argument("--MLP_hidden_dim", type=int, default=16)
+parser.add_argument("--MLP_num_layers", type=int, default=2)
+parser.add_argument("--MLP_dropout", type=float, default=0.2)
+
+parser.add_argument("--n_ent", type=int, default=0)
+parser.add_argument("--n_rel", type=int, default=0)
+parser.add_argument("--valid", type=str, default='YAGO15K')
+parser.add_argument("--test", type=str, default='YAGO15K')
+parser.add_argument("--stru_dim", type=int, default=16)
+parser.add_argument("--text_dim", type=int, default=768)
+parser.add_argument("--img_dim", type=int, default=4096)
+parser.add_argument("--time_dim", type=int, default=32)
+parser.add_argument("--out_dim", type=int, default=32)
+parser.add_argument("--train_support", type=int, default=0)
+parser.add_argument("--gnn_model", type=str, default='RS_GNN')
+parser.add_argument("--mm", type=int, default=0)
+parser.add_argument("--meta", type=int, default=1)
+parser.add_argument("--temperature", type=float, default=0.5)
+parser.add_argument("--premm", type=int, default=0)
+parser.add_argument("--withmm", type=int, default=1)
+parser.add_argument("--update_step", type=int, default=20)
+parser.add_argument("--update_step_test", type=int, default=20)
+parser.add_argument("--update_lr", type=float, default=0.001)
+
+
 # base
 parser.add_argument('--gpu', default=0, type=int)
 parser.add_argument('--batch_size', default=128, type=int)
@@ -124,3 +172,49 @@ parser.add_argument('--world-size', default=3, type=int,
                     help='number of distributed processes')
 parser.add_argument('--dist-url', default='env://', help='url used to set up distributed training')
 parser.add_argument("--local_rank", default=-1, type=int)
+
+
+args = parser.parse_args()
+# os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+
+
+if __name__ == '__main__':
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+
+    results_dir = 'results'
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
+    args.perf_file = os.path.join(results_dir, time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(time.time())) + '.txt')
+    print(args)
+    print(args, file=open(args.perf_file, 'a'))
+    loader = DataLoader(args)
+    model = BaseModel(args, loader)
+
+    best_pr = 0
+    best_t_roc = 0
+    best_t_pr = 0
+
+    best_str = ''
+    wait_patient = 10
+    epoch = 0
+
+    best_mrr = 0
+
+    while wait_patient > 0:
+        epoch += 1
+        mrr, out_str = model.train_batch()
+        with open(args.perf_file, 'a+') as f:
+            f.write(out_str)
+        if mrr > best_mrr:
+            best_mrr = mrr
+            best_str = out_str
+            print(str(epoch) + '\t' + best_str)
+            with open(args.perf_file,'a+') as f:
+                f.write("best at "+ str(epoch) + '\t' + best_str)
+            wait_patient = 10
+        else:
+            wait_patient -= 1
+
+    print(best_str)
+
