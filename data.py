@@ -13,7 +13,7 @@ from transformers import BertTokenizer
 import torch.distributed
 from tqdm import tqdm
 
-from .utils import get_topk_indices, get_adjr
+from utils import get_topk_indices, get_adjr
 
 
 class EADataset(torch.utils.data.Dataset):

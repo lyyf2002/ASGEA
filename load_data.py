@@ -169,7 +169,7 @@ class DataLoader:
         support_triple = self.double_triple(support_triple)
         query_triple = self.double_triple(query_triple)
         # now the fact triples are fact_triple + support_triple
-        self.KG, self.M_sub = self.load_graph(self.fact_triple + support_triple)
+        self.KG, self.M_sub = self.load_graph(self.fact_data + support_triple)
         self.n_train = len(query_triple)
         self.train_data = np.array(query_triple)
 

@@ -9,7 +9,10 @@ import time
 from collections import OrderedDict
 
 parser = argparse.ArgumentParser(description="Parser for MASEA")
-parser.add_argument('--data_path', type=str, default='data/DTI_few1')
+parser.add_argument("--data_path", default="../data/mmkg", type=str, help="Experiment path")
+parser.add_argument("--data_choice", default="FBYG15K", type=str, choices=["DBP15K", "DWY", "FBYG15K", "FBDB15K"],
+                    help="Experiment path")
+parser.add_argument("--data_rate", type=float, default=0.8, choices=[0.2, 0.3, 0.5, 0.8], help="training set rate")
 parser.add_argument('--seed', type=str, default=1234)
 parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--perf_file', type=str, default='perf.txt')
@@ -30,8 +33,7 @@ parser.add_argument("--MLP_dropout", type=float, default=0.2)
 
 parser.add_argument("--n_ent", type=int, default=0)
 parser.add_argument("--n_rel", type=int, default=0)
-parser.add_argument("--valid", type=str, default='YAGO15K')
-parser.add_argument("--test", type=str, default='YAGO15K')
+
 parser.add_argument("--stru_dim", type=int, default=16)
 parser.add_argument("--text_dim", type=int, default=768)
 parser.add_argument("--img_dim", type=int, default=4096)
@@ -50,7 +52,7 @@ parser.add_argument("--update_lr", type=float, default=0.001)
 
 
 # base
-parser.add_argument('--gpu', default=0, type=int)
+
 parser.add_argument('--batch_size', default=128, type=int)
 parser.add_argument('--epoch', default=100, type=int)
 parser.add_argument("--save_model", default=0, type=int, choices=[0, 1])
@@ -62,13 +64,12 @@ parser.add_argument("--exp_name", default="EA_exp", type=str, help="Experiment n
 parser.add_argument("--dump_path", default="dump/", type=str, help="Experiment dump path")
 parser.add_argument("--exp_id", default="001", type=str, help="Experiment ID")
 parser.add_argument("--random_seed", default=42, type=int)
-parser.add_argument("--data_path", default="mmkg", type=str, help="Experiment path")
+
 
 # --------- EA -----------
-parser.add_argument("--data_choice", default="DBP15K", type=str, choices=["DBP15K", "DWY", "FBYG15K", "FBDB15K"],
-                    help="Experiment path")
-parser.add_argument("--data_rate", type=float, default=0.3, help="training set rate")
-# parser.add_argument("--data_rate", type=float, default=0.3, choices=[0.2, 0.3, 0.5, 0.8], help="training set rate")
+
+# parser.add_argument("--data_rate", type=float, default=0.3, help="training set rate")
+#
 
 # TODO: add some dynamic variable
 parser.add_argument("--model_name", default="MEAformer", type=str, choices=["EVA", "MCLEA", "MSNEA", "MEAformer"],
@@ -79,7 +80,6 @@ parser.add_argument('--workers', type=int, default=8)
 parser.add_argument('--accumulation_steps', type=int, default=1)
 parser.add_argument("--scheduler", default="linear", type=str, choices=["linear", "cos", "fixed"])
 parser.add_argument("--optim", default="adamw", type=str, choices=["adamw", "adam"])
-parser.add_argument('--lr', type=float, default=3e-5)
 parser.add_argument('--weight_decay', type=float, default=0.0001)
 parser.add_argument("--adam_epsilon", default=1e-8, type=float)
 parser.add_argument('--eval_epoch', default=100, type=int, help='evaluate each n epoch')
@@ -93,11 +93,10 @@ parser.add_argument("--contrastive_loss", default=0, type=int, choices=[0, 1])
 parser.add_argument('--clip', type=float, default=1., help='gradient clipping')
 
 # --------- EVA -----------
-parser.add_argument("--data_split", default="fr_en", type=str, help="Experiment split",
+parser.add_argument("--data_split", default="norm", type=str, help="Experiment split",
                     choices=["dbp_wd_15k_V2", "dbp_wd_15k_V1", "zh_en", "ja_en", "fr_en", "norm"])
 parser.add_argument("--hidden_units", type=str, default="128,128,128",
                     help="hidden units in each hidden layer(including in_dim and out_dim), splitted with comma")
-parser.add_argument("--dropout", type=float, default=0.0, help="dropout rate for layers")
 parser.add_argument("--attn_dropout", type=float, default=0.0, help="dropout rate for gat layers")
 parser.add_argument("--distance", type=int, default=2, help="L1 distance or L2 distance. ('1', '2')", choices=[1, 2])
 parser.add_argument("--csls", action="store_true", default=False, help="use CSLS for inference")
@@ -122,7 +121,6 @@ parser.add_argument("--heads", type=str, default="2,2", help="heads in each gat 
 parser.add_argument("--instance_normalization", action="store_true", default=False,
                     help="enable instance normalization")
 parser.add_argument("--attr_dim", type=int, default=100, help="the hidden size of attr and rel features")
-parser.add_argument("--img_dim", type=int, default=100, help="the hidden size of img feature")
 parser.add_argument("--name_dim", type=int, default=100, help="the hidden size of name feature")
 parser.add_argument("--char_dim", type=int, default=100, help="the hidden size of char feature")
 
