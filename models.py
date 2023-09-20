@@ -11,7 +11,7 @@ class GNNLayer(torch.nn.Module):
         self.attn_dim = attn_dim
         self.act = act
 
-        self.rela_embed = nn.Embedding(2 * n_rel + 1, in_dim)
+        self.rela_embed = nn.Embedding(2 * n_rel + 2, in_dim)
 
         self.Ws_attn = nn.Linear(in_dim, attn_dim, bias=False)
         self.Wr_attn = nn.Linear(in_dim, attn_dim, bias=False)
@@ -49,7 +49,7 @@ class MASGNN(torch.nn.Module):
         self.n_layer = params.n_layer
         self.hidden_dim = params.hidden_dim
         self.attn_dim = params.attn_dim
-        self.n_rel = params.n_rel
+        self.n_rel = loader.n_rel
         self.loader = loader
         acts = {'relu': nn.ReLU(), 'tanh': torch.tanh, 'idd': lambda x: x}
         act = acts[params.act]
@@ -76,8 +76,14 @@ class MASGNN(torch.nn.Module):
         scores_all = []
         for i in range(self.n_layer):
             nodes, edges, old_nodes_new_idx = self.loader.get_neighbors(nodes.data.cpu().numpy(), mode=mode)
-
+            # print(nodes)
+            # print(edges)
+            # print(old_nodes_new_idx)
+            # print(hidden)
+            # print(h0)
             hidden = self.gnn_layers[i](hidden, edges, nodes.size(0), old_nodes_new_idx)
+            # print(hidden)
+
             h0 = torch.zeros(1, nodes.size(0), hidden.size(1)).cuda().index_copy_(1, old_nodes_new_idx, h0)
             hidden = self.dropout(hidden)
             hidden, h0 = self.gate(hidden.unsqueeze(0), h0)

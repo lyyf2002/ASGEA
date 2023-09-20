@@ -14,11 +14,10 @@ class BaseModel(object):
 
         self.loader = loader
         self.n_ent = loader.n_ent
-        self.n_ent_ind = loader.n_ent_ind
         self.n_batch = args.n_batch
 
         self.n_train = loader.n_train
-        self.n_valid = loader.n_valid
+        # self.n_valid = loader.n_valid
         self.n_test  = loader.n_test
         self.n_layer = args.n_layer
 

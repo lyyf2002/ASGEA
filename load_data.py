@@ -7,10 +7,11 @@ import numpy as np
 from collections import defaultdict
 from data import load_eva_data
 
+
 class DataLoader:
     def __init__(self, args):
 
-        KGs, non_train,left_ents,right_ents, train_ill, test_ill, eval_ill, test_ill_ = load_eva_data(args)
+        KGs, non_train, left_ents, right_ents, train_ill, test_ill, eval_ill, test_ill_ = load_eva_data(args)
         ent_num = KGs['ent_num']
         rel_num = KGs['rel_num']
         self.images_list = KGs['images_list']
@@ -23,7 +24,6 @@ class DataLoader:
         self.left_ents = left_ents
         self.right_ents = right_ents
 
-
         self.n_ent = ent_num
         self.n_rel = rel_num
 
@@ -32,25 +32,22 @@ class DataLoader:
         self.fact_triple = triples
 
         self.train_triple = self.ill2triples(train_ill)
-        self.valid_triple = eval_ill # None
+        self.valid_triple = eval_ill  # None
         self.test_triple = self.ill2triples(test_ill)
-
 
         # add inverse
         self.fact_data = self.double_triple(self.fact_triple)
         # self.train_data = np.array(self.double_triple(self.train_triple))
         # self.valid_data = self.double_triple(self.valid_triple)
-        self.test_data = self.double_triple(self.test_triple)
+        self.test_data = self.double_triple(self.test_triple, ill=True)
         # self.KG,self.M_sub = self.load_graph(self.fact_data) # do it in shuffle_train
-        self.tKG,self.tM_sub = self.load_graph(self.fact_data+self.double_triple(self.train_triple))
+        self.tKG, self.tM_sub = self.load_graph(self.fact_data + self.double_triple(self.train_triple, ill=True))
 
         self.n_test = len(self.test_data)
         self.shuffle_train()
 
-
-
-    def ill2triples(self,ill):
-        return [(i[0],self.n_rel*2+1,i[1])for i in ill]
+    def ill2triples(self, ill):
+        return [(i[0], self.n_rel * 2 + 1, i[1]) for i in ill]
 
     # def read_triples(self, filename):
     #     triples = []
@@ -63,11 +60,11 @@ class DataLoader:
     #             self.filters[(t, r + self.n_rel)].add(h)
     #     return triples
 
-    def double_triple(self, triples):
+    def double_triple(self, triples, ill=False):
         new_triples = []
         for triple in triples:
             h, r, t = triple
-            new_triples.append([t, r + self.n_rel, h])
+            new_triples.append([t, r + self.n_rel if not ill else r, h])
         return triples + new_triples
 
     def load_graph(self, triples):
@@ -77,7 +74,7 @@ class DataLoader:
         KG = np.concatenate([np.array(triples), idd], 0)
         n_fact = len(KG)
         M_sub = csr_matrix((np.ones((n_fact,)), (np.arange(n_fact), KG[:, 0])),
-                                shape=(n_fact, self.n_ent))
+                           shape=(n_fact, self.n_ent))
         return KG, M_sub
 
     # def load_test_graph(self, triples):
@@ -159,15 +156,14 @@ class DataLoader:
         # rand_idx = np.random.permutation(n_all)
         # all_triple = all_triple[rand_idx]
 
-
         # random shuffle train_triples
         random.shuffle(self.train_triple)
         # support/query split 3/1
         support_triple = self.train_triple[:len(self.train_triple) * 3 // 4]
         query_triple = self.train_triple[len(self.train_triple) * 3 // 4:]
         # add inverse triples
-        support_triple = self.double_triple(support_triple)
-        query_triple = self.double_triple(query_triple)
+        support_triple = self.double_triple(support_triple, ill=True)
+        query_triple = self.double_triple(query_triple, ill=True)
         # now the fact triples are fact_triple + support_triple
         self.KG, self.M_sub = self.load_graph(self.fact_data + support_triple)
         self.n_train = len(query_triple)
@@ -180,4 +176,3 @@ class DataLoader:
         # self.KG,self.M_sub = self.load_graph(self.fact_data)
 
         print('n_train:', self.n_train, 'n_test:', self.n_test)
-

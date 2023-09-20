@@ -24,7 +24,7 @@ parser.add_argument('--attn_dim', type=int, default=5)
 parser.add_argument('--dropout', type=float, default=0.2)
 parser.add_argument('--act', type=str, default='relu')
 parser.add_argument('--n_layer', type=int, default=4)
-parser.add_argument('--n_batch', type=int, default=10)
+parser.add_argument('--n_batch', type=int, default=2)
 parser.add_argument("--lamda", type=float, default=0.5)
 
 parser.add_argument("--MLP_hidden_dim", type=int, default=16)
@@ -173,7 +173,7 @@ parser.add_argument("--local_rank", default=-1, type=int)
 
 
 args = parser.parse_args()
-# os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 
 if __name__ == '__main__':
