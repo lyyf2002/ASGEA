@@ -40,6 +40,7 @@ class DataLoader:
         # self.train_data = np.array(self.double_triple(self.train_triple))
         # self.valid_data = self.double_triple(self.valid_triple)
         self.test_data = self.double_triple(self.test_triple, ill=True)
+        self.test_data = np.array(self.test_data)
         # self.KG,self.M_sub = self.load_graph(self.fact_data) # do it in shuffle_train
         self.tKG, self.tM_sub = self.load_graph(self.fact_data + self.double_triple(self.train_triple, ill=True))
 
@@ -64,7 +65,7 @@ class DataLoader:
         new_triples = []
         for triple in triples:
             h, r, t = triple
-            new_triples.append([t, r + self.n_rel if not ill else r, h])
+            new_triples.append([t, r + self.n_rel if not ill else r+1, h])
         return triples + new_triples
 
     def load_graph(self, triples):

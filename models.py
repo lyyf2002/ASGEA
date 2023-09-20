@@ -11,7 +11,7 @@ class GNNLayer(torch.nn.Module):
         self.attn_dim = attn_dim
         self.act = act
 
-        self.rela_embed = nn.Embedding(2 * n_rel + 2, in_dim)
+        self.rela_embed = nn.Embedding(2 * n_rel + 3, in_dim)
 
         self.Ws_attn = nn.Linear(in_dim, attn_dim, bias=False)
         self.Wr_attn = nn.Linear(in_dim, attn_dim, bias=False)

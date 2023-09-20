@@ -356,21 +356,28 @@ def get_adjr(ent_size, triples, norm=False):
         return M
 
 
-def cal_ranks(scores, labels, filters):
-    scores = scores - np.min(scores, axis=1, keepdims=True) + 1e-8
-    full_rank = rankdata(-scores, method='average', axis=1)
-    filter_scores = scores * filters
-    filter_rank = rankdata(-filter_scores, method='min', axis=1)
-    ranks = (full_rank - filter_rank + 1) * labels      # get the ranks of multiple answering entities simultaneously
-    ranks = ranks[np.nonzero(ranks)]
+def cal_ranks(scores, labels, is_lefts, left_num):
+    ranks = []
+    for idx, score in enumerate(scores):
+        if not is_lefts[idx]:
+            real_score = - score[:left_num]
+            rank = real_score.argsort()
+            rank = np.where(rank == labels[idx])[0][0]
+        else:
+            real_score = - score[left_num:]
+            rank = real_score.argsort()
+            rank = np.where(rank == labels[idx]-left_num)[0][0]
+        ranks.append(rank+1)
     return list(ranks)
 
 
 def cal_performance(ranks):
     mrr = (1. / ranks).sum() / len(ranks)
     h_1 = sum(ranks<=1) * 1.0 / len(ranks)
+    h_3 = sum(ranks<=3) * 1.0 / len(ranks)
+    h_5 = sum(ranks<=5) * 1.0 / len(ranks)
     h_10 = sum(ranks<=10) * 1.0 / len(ranks)
-    return mrr, h_1, h_10
+    return mrr, h_1,h_3,h_5, h_10
 
 def multi_cal_rank(task, sim, top_k, l_or_r):
     mean = 0
@@ -472,3 +479,14 @@ def output_device(model):
     # for d in devices:
     #     print(d)
     print(devices)
+
+
+if __name__ == '__main__':
+    # test cal_ranks 9 nodes, 5left , 4right,2 seeds(3,7)(8,2)
+    scores = np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.31,0.9,0.8,0.7],
+                          [0.5, 0.4, 0.7, 0.2, 0.1,0.3,0.32,0.23,0.44]])
+    labels = np.array([7,2])
+    is_lefts = np.array([True,False])
+    left_num = 5
+    ranks = cal_ranks(scores, labels, is_lefts, left_num)
+    print(ranks)
