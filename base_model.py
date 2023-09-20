@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import time
-
+from tqdm import tqdm
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ExponentialLR
 from models import MASGNN
@@ -37,7 +37,7 @@ class BaseModel(object):
 
         t_time = time.time()
         self.model.train()
-        for i in range(1):
+        for i in tqdm(range(n_batch)):
             start = i*batch_size
             end = min(self.n_train, (i+1)*batch_size)
             batch_idx = np.arange(start, end)
