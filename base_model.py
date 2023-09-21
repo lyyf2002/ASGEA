@@ -62,8 +62,8 @@ class BaseModel(object):
         self.scheduler.step()
         self.t_time += time.time() - t_time
 
-        valid_mrr, out_str = self.evaluate()
-        return valid_mrr, out_str
+        t_mrr,t_h1, t_h3, t_h5, t_h10, out_str = self.evaluate()
+        return t_mrr,t_h1, t_h3, t_h5, t_h10, out_str
 
     def evaluate(self, ):
         batch_size = self.n_batch
@@ -88,5 +88,5 @@ class BaseModel(object):
         i_time = time.time() - i_time
 
         out_str = '[TEST] MRR:%.4f H@1:%.4f H@3:%.4f H@5:%.4f H@10:%.4f \t[TIME] inference:%.4f\n' % (t_mrr, t_h1, t_h3, t_h5, t_h10, i_time)
-        return t_mrr, out_str
+        return t_mrr,t_h1, t_h3, t_h5, t_h10, out_str
 

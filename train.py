@@ -1,6 +1,7 @@
 import os
 import argparse
-
+import nni
+from nni.utils import merge_parameter
 import torch
 import numpy as np
 from load_data import DataLoader
@@ -171,7 +172,7 @@ parser.add_argument('--world-size', default=3, type=int,
 parser.add_argument('--dist-url', default='env://', help='url used to set up distributed training')
 parser.add_argument("--local_rank", default=-1, type=int)
 
-
+parser.add_argument("--nni", default=0, type=int)
 args = parser.parse_args()
 os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -184,14 +185,19 @@ if __name__ == '__main__':
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
     args.perf_file = os.path.join(results_dir, time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(time.time())) + '.txt')
+    
+    if args.nni:
+        nni_params = nni.get_next_parameter()
+        args = merge_parameter(args, nni_params)
     print(args)
     print(args, file=open(args.perf_file, 'a'))
     loader = DataLoader(args)
     model = BaseModel(args, loader)
 
-    best_pr = 0
-    best_t_roc = 0
-    best_t_pr = 0
+    best_h1 = 0
+    best_h3 = 0
+    best_h5 = 0
+    best_h10 = 0
 
     best_str = ''
     wait_patient = 10
@@ -201,11 +207,17 @@ if __name__ == '__main__':
 
     while wait_patient > 0:
         epoch += 1
-        mrr, out_str = model.train_batch()
+        mrr,t_h1, t_h3, t_h5, t_h10, out_str = model.train_batch()
+        if args.nni:
+            nni.report_intermediate_result({'default':mrr,'h1':t_h1,'h3':t_h3,'h5':t_h5,'h10':t_h10})
         with open(args.perf_file, 'a+') as f:
             f.write(out_str)
         if mrr > best_mrr:
             best_mrr = mrr
+            best_h1 = t_h1
+            best_h3 = t_h3
+            best_h5 = t_h5
+            best_h10 = t_h10
             best_str = out_str
             print(str(epoch) + '\t' + best_str)
             with open(args.perf_file,'a+') as f:
@@ -214,5 +226,7 @@ if __name__ == '__main__':
         else:
             wait_patient -= 1
 
+    if args.nni:
+        nni.report_final_result({'default':best_mrr,'h1':best_h1,'h3':best_h3,'h5':best_h5,'h10':best_h10})
     print(best_str)
 
