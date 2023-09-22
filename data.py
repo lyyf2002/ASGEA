@@ -122,9 +122,14 @@ def load_eva_data(args):
 
     rel_features = load_relation(ENT_NUM, triples, 1000)
     print(f"relation feature shape:{rel_features.shape}")
-    a1 = os.path.join(file_dir, 'training_attrs_1')
-    a2 = os.path.join(file_dir, 'training_attrs_2')
-    att_features = load_attr([a1, a2], ENT_NUM, ent2id_dict, 1000)  # attr
+    if 'FB' in args.data_choice:
+        a1 = os.path.join(file_dir, 'FB15K_NumericalTriples.txt')
+        a2 = os.path.join(file_dir, 'DB15K_NumericalTriples.txt') if 'DB' in args.data_choice else os.path.join(file_dir, 'YAGO15K_NumericalTriples.txt')
+        att_features = load_attr_withNum([a1, a2], ent2id_dict)
+    else:
+        a1 = os.path.join(file_dir, 'training_attrs_1')
+        a2 = os.path.join(file_dir, 'training_attrs_2')
+        att_features = load_attr([a1, a2], ENT_NUM, ent2id_dict, 1000)  # attr
     print(f"attribute feature shape:{att_features.shape}")
     print("-----dataset summary-----")
     print(f"dataset:\t\t {file_dir}")
@@ -367,6 +372,19 @@ def get_ent2id(fns):
                 th = line[:-1].split('\t')
                 ent2id[th[1]] = int(th[0])
     return ent2id
+
+
+def load_attr_withNum(data, fn, ent2id):
+
+    with open(fn, 'r') as f:
+        Numericals = f.readlines()
+    Numericals = [i[:-1].split('\t') for i in Numericals]
+    if data=='FB15K':
+        Numericals = [(ent2id[i[0]], i[1][1:-1].replace('http://rdf.freebase.com/ns/', '').split('.')[-1], i[2]) for i in
+                      Numericals]
+    elif data=='DB15K':
+        
+    return Numericals
 
 
 # The most frequent attributes are selected to save space

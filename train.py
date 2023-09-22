@@ -1,7 +1,6 @@
 import os
 import argparse
-import nni
-from nni.utils import merge_parameter
+
 import torch
 import numpy as np
 from load_data import DataLoader
@@ -187,6 +186,8 @@ if __name__ == '__main__':
     args.perf_file = os.path.join(results_dir, time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(time.time())) + '.txt')
     
     if args.nni:
+        import nni
+        from nni.utils import merge_parameter
         nni_params = nni.get_next_parameter()
         args = merge_parameter(args, nni_params)
     print(args)
