@@ -125,12 +125,12 @@ def load_eva_data(args):
     if 'FB' in args.data_choice:
         a1 = os.path.join(file_dir, 'FB15K_NumericalTriples.txt')
         a2 = os.path.join(file_dir, 'DB15K_NumericalTriples.txt') if 'DB' in args.data_choice else os.path.join(file_dir, 'YAGO15K_NumericalTriples.txt')
-        att_features = load_attr_withNum([a1, a2], ent2id_dict)
+        att_features = load_attr_withNums(['FB15K','DB15K'] if 'DB' in args.data_choice else ['FB15K','YAGO15K'],[a1, a2], ent2id_dict)
     else:
         a1 = os.path.join(file_dir, 'training_attrs_1')
         a2 = os.path.join(file_dir, 'training_attrs_2')
         att_features = load_attr([a1, a2], ENT_NUM, ent2id_dict, 1000)  # attr
-    print(f"attribute feature shape:{att_features.shape}")
+    print(f"attribute feature shape:{len(att_features)}")
     print("-----dataset summary-----")
     print(f"dataset:\t\t {file_dir}")
     print(f"triple num:\t {len(triples)}")
@@ -373,16 +373,37 @@ def get_ent2id(fns):
                 ent2id[th[1]] = int(th[0])
     return ent2id
 
+def db_str(s):
+    return s[1:-1].split('/')[-1].replace('_',' ')
+def db_time(s):
+    s = s.split("^^")[0][1:-1]
+    if '-' not in s[1:]:
+        return float(s)
+    s = s.split('-')
+    y = int(s[0].replace('#','0'))
+    m = int(s[1]) if s[1]!='##'else 1
+    d = int(s[2]) if s[2]!='##' and s[2]!='' else 1
+    return y + (m-1)/12 +(d-1)/30/12
 
+def load_attr_withNums(datas,fns, ent2id_dict):
+    ans =  [load_attr_withNum(data,fn,ent2id_dict) for data,fn in zip(datas,fns)]
+    return ans[0]+ans[1]
 def load_attr_withNum(data, fn, ent2id):
 
-    with open(fn, 'r') as f:
+    with open(fn, 'r',encoding='utf-8') as f:
         Numericals = f.readlines()
-    Numericals = [i[:-1].split('\t') for i in Numericals]
+
     if data=='FB15K':
-        Numericals = [(ent2id[i[0]], i[1][1:-1].replace('http://rdf.freebase.com/ns/', '').split('.')[-1], i[2]) for i in
+        Numericals = [i[:-1].split('\t') for i in Numericals]
+        Numericals = [(ent2id[i[0]], i[1][1:-1].replace('http://rdf.freebase.com/ns/', '').split('.')[-1], float(i[2])) for i in
                       Numericals]
     elif data=='DB15K':
+        Numericals = [i[:-1].split(' ') if '\t' not in i else i[:-1].split('\t') for i in Numericals]
+        Numericals = [(ent2id[i[0]], db_str(i[1]), db_time(i[2])) for i in Numericals]
+
+    elif data=='YAGO15K':
+        Numericals = [i[:-1].split(' ') if '\t' not in i else i[:-1].split('\t') for i in Numericals]
+        Numericals = [(ent2id[i[0]], db_str(i[1]), db_time(i[2])) for i in Numericals]
         
     return Numericals
 

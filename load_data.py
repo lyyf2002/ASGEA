@@ -17,6 +17,11 @@ class DataLoader:
         self.images_list = KGs['images_list']
         self.rel_features = KGs['rel_features']
         self.att_features = KGs['att_features']
+        if os.path.exists(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy')):
+            self.att_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), allow_pickle=True)
+        else:
+            self.att_features = self.bert_feature()
+            np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), self.att_features)
         self.name_features = KGs['name_features']
         self.char_features = KGs['char_features']
         triples = KGs['triples']
@@ -46,6 +51,25 @@ class DataLoader:
 
         self.n_test = len(self.test_data)
         self.shuffle_train()
+
+    def bert_feature(self, ):
+        from transformers import BertTokenizer, BertModel
+        tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
+        model = BertModel.from_pretrained("bert-base-multilingual-cased")
+        self.att_ids = [i[0] for i in self.att_features]
+        outputs = []
+        texts = [a + ' is ' + str(v) for i,a,v in self.att_features]
+        batch_size = 512
+        sent_batch = [texts[i:i + batch_size] for i in range(0, len(texts), batch_size)]
+        for sent in sent_batch:
+
+            encoded_input = tokenizer(sent, return_tensors='pt', padding=True, truncation=True, max_length=512)
+            with torch.no_grad():
+                output = model(**encoded_input)
+            outputs.append(output.pooler_output)
+        outputs = torch.cat(outputs, dim=0)
+        del model
+        return outputs.detach().numpy()
 
     def ill2triples(self, ill):
         return [(i[0], self.n_rel * 2 + 1, i[1]) for i in ill]
