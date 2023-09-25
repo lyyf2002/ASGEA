@@ -18,6 +18,7 @@ class BaseModel(object):
         self.n_rel = loader.n_rel
         self.left_ents = loader.left_ents
         self.right_ents = loader.right_ents
+        self.shuffle = args.shuffle
 
         self.n_train = loader.n_train
         # self.n_valid = loader.n_valid
@@ -34,6 +35,8 @@ class BaseModel(object):
 
         batch_size = self.n_batch
         n_batch = self.n_train // batch_size + (self.n_train % batch_size > 0)
+        if self.shuffle:
+            self.loader.shuffle_train()
 
         t_time = time.time()
         self.model.train()

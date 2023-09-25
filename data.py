@@ -383,7 +383,7 @@ def db_time(s):
     y = int(s[0].replace('#','0'))
     m = int(s[1]) if s[1]!='##'else 1
     d = int(s[2]) if s[2]!='##' and s[2]!='' else 1
-    return y + (m-1)/12 +(d-1)/30/12
+    return f'{y}-{m}-{d}'
 
 def load_attr_withNums(datas,fns, ent2id_dict):
     ans =  [load_attr_withNum(data,fn,ent2id_dict) for data,fn in zip(datas,fns)]

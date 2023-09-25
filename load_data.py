@@ -17,11 +17,14 @@ class DataLoader:
         self.images_list = KGs['images_list']
         self.rel_features = KGs['rel_features']
         self.att_features = KGs['att_features']
+        self.att_ids = [i[0] for i in self.att_features]
         if os.path.exists(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy')):
             self.att_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), allow_pickle=True)
+            self.att_rel_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_rel_features.npy'), allow_pickle=True)
         else:
-            self.att_features = self.bert_feature()
+            self.att_features, self.att_rel_features = self.bert_feature()
             np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), self.att_features)
+            np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_rel_features.npy'), self.att_rel_features)
         self.name_features = KGs['name_features']
         self.char_features = KGs['char_features']
         triples = KGs['triples']
@@ -55,8 +58,8 @@ class DataLoader:
     def bert_feature(self, ):
         from transformers import BertTokenizer, BertModel
         tokenizer = BertTokenizer.from_pretrained('bert-base-multilingual-cased')
-        model = BertModel.from_pretrained("bert-base-multilingual-cased")
-        self.att_ids = [i[0] for i in self.att_features]
+        model = BertModel.from_pretrained("bert-base-multilingual-cased").cuda()
+
         outputs = []
         texts = [a + ' is ' + str(v) for i,a,v in self.att_features]
         batch_size = 512
@@ -64,12 +67,32 @@ class DataLoader:
         for sent in sent_batch:
 
             encoded_input = tokenizer(sent, return_tensors='pt', padding=True, truncation=True, max_length=512)
+            #cuda
+            encoded_input.data['input_ids'] = encoded_input.data['input_ids'].cuda()
+            encoded_input.data['attention_mask'] = encoded_input.data['attention_mask'].cuda()
+            encoded_input.data['token_type_ids'] = encoded_input.data['token_type_ids'].cuda()
             with torch.no_grad():
                 output = model(**encoded_input)
             outputs.append(output.pooler_output)
         outputs = torch.cat(outputs, dim=0)
+        rels = [i[1] for i in self.att_features]
+        batch_size = 512
+        sent_batch = [rels[i:i + batch_size] for i in range(0, len(rels), batch_size)]
+        rel_outputs = []
+        for sent in sent_batch:
+            encoded_input = tokenizer(sent, return_tensors='pt', padding=True, truncation=True, max_length=512)
+            #cuda
+            encoded_input.data['input_ids'] = encoded_input.data['input_ids'].cuda()
+            encoded_input.data['attention_mask'] = encoded_input.data['attention_mask'].cuda()
+            encoded_input.data['token_type_ids'] = encoded_input.data['token_type_ids'].cuda()
+            with torch.no_grad():
+                output = model(**encoded_input)
+            rel_outputs.append(output.pooler_output)
+        rel_outputs = torch.cat(rel_outputs, dim=0)
         del model
-        return outputs.detach().numpy()
+        return outputs.cpu().detach().numpy(), rel_outputs.cpu().detach().numpy()
+
+
 
     def ill2triples(self, ill):
         return [(i[0], self.n_rel * 2 + 1, i[1]) for i in ill]
