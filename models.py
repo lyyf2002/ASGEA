@@ -150,12 +150,12 @@ class MASGNN(torch.nn.Module):
         self.dropout = nn.Dropout(params.dropout)
         self.W_final = nn.Linear(self.hidden_dim, 1, bias=False)  # get score
         self.gate = nn.GRU(self.hidden_dim, self.hidden_dim)
-
-        self.img_features = F.normalize(torch.FloatTensor(self.loader.images_list)).cuda()
-        self.att_features = torch.FloatTensor(self.loader.att_features).cuda()
-        self.att_rel_features = torch.FloatTensor(self.loader.att_rel_features).cuda()
-        self.att_ids = torch.LongTensor(self.loader.att_ids).cuda()
-        self.mmfeature = MMFeature(self.n_ent, params)
+        if self.mm:
+            self.img_features = F.normalize(torch.FloatTensor(self.loader.images_list)).cuda()
+            self.att_features = torch.FloatTensor(self.loader.att_features).cuda()
+            self.att_rel_features = torch.FloatTensor(self.loader.att_rel_features).cuda()
+            self.att_ids = torch.LongTensor(self.loader.att_ids).cuda()
+            self.mmfeature = MMFeature(self.n_ent, params)
 
 
     def forward(self, subs, mode='train'):
@@ -188,7 +188,10 @@ class MASGNN(torch.nn.Module):
             hidden = self.gnn_layers[i](hidden, edges, nodes.size(0), old_nodes_new_idx)
             # print(hidden)
 
-            h0 = mean_feature[nodes[:, 1]].unsqueeze(0).cuda().index_copy_(1, old_nodes_new_idx, h0)
+            if self.mm:
+                h0 = mean_feature[nodes[:, 1]].unsqueeze(0).cuda().index_copy_(1, old_nodes_new_idx, h0)
+            else:
+                h0 = torch.zeros(1, nodes.size(0), hidden.size(1)).cuda().index_copy_(1, old_nodes_new_idx, h0)
             hidden = self.dropout(hidden)
             hidden, h0 = self.gate(hidden.unsqueeze(0), h0)
             hidden = hidden.squeeze(0)

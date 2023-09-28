@@ -376,6 +376,8 @@ def get_ent2id(fns):
 def db_str(s):
     return s[1:-1].split('/')[-1].replace('_',' ')
 def db_time(s):
+    if 'e' in s:
+        return s
     s = s.split("^^")[0][1:-1]
     if '-' not in s[1:]:
         return float(s)
