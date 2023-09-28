@@ -18,13 +18,14 @@ class DataLoader:
         self.rel_features = KGs['rel_features']
         self.att_features = KGs['att_features']
         self.att_ids = [i[0] for i in self.att_features]
-        if os.path.exists(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy')):
-            self.att_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), allow_pickle=True)
-            self.att_rel_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_rel_features.npy'), allow_pickle=True)
-        else:
-            self.att_features, self.att_rel_features = self.bert_feature()
-            np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), self.att_features)
-            np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_rel_features.npy'), self.att_rel_features)
+        if args.mm:
+            if os.path.exists(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy')):
+                self.att_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), allow_pickle=True)
+                self.att_rel_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_rel_features.npy'), allow_pickle=True)
+            else:
+                self.att_features, self.att_rel_features = self.bert_feature()
+                np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), self.att_features)
+                np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_rel_features.npy'), self.att_rel_features)
         self.name_features = KGs['name_features']
         self.char_features = KGs['char_features']
         triples = KGs['triples']
