@@ -23,7 +23,7 @@ parser.add_argument('--hidden_dim', type=int, default=64)
 parser.add_argument('--attn_dim', type=int, default=5)
 parser.add_argument('--dropout', type=float, default=0.2)
 parser.add_argument('--act', type=str, default='relu')
-parser.add_argument('--n_layer', type=int, default=4)
+parser.add_argument('--n_layer', type=int, default=5)
 parser.add_argument('--n_batch', type=int, default=2)
 parser.add_argument("--lamda", type=float, default=0.5)
 
@@ -184,7 +184,8 @@ if __name__ == '__main__':
     results_dir = 'results'
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
-    args.perf_file = os.path.join(results_dir, time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(time.time())) + '.txt')
+    args_str = f'{args.data_choice}_{args.data_rate}_lr{args.lr}_bs{args.n_batch}_hidden_dim{args.hidden_dim}_lamb{args.lamb}_dropout{args.dropout}_act{args.act}_decay_rate{args.decay_rate}'
+    args.perf_file = os.path.join(results_dir, args_str + time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(time.time())) + '.txt')
     
     if args.nni:
         import nni
