@@ -148,7 +148,7 @@ class MASGNN(torch.nn.Module):
         self.gnn_layers = nn.ModuleList(self.gnn_layers)
 
         self.dropout = nn.Dropout(params.dropout)
-        self.W_final = nn.Linear(self.hidden_dim, 1, bias=False)  # get score
+        self.W_final = nn.Linear(3 * self.hidden_dim if self.mm else self.hidden_dim, 1, bias=False)  # get score todo: try to use mlp
         self.gate = nn.GRU(self.hidden_dim, self.hidden_dim)
         if self.mm:
             self.img_features = F.normalize(torch.FloatTensor(self.loader.images_list)).cuda()
@@ -195,8 +195,13 @@ class MASGNN(torch.nn.Module):
             hidden = self.dropout(hidden)
             hidden, h0 = self.gate(hidden.unsqueeze(0), h0)
             hidden = hidden.squeeze(0)
-
-        scores = self.W_final(hidden).squeeze(-1)
+        # hidden -> (len(nodes), hidden_dim)
+        if self.mm:
+            mm_hidden = torch.cat((hidden, features['IMG'][nodes[:, 1]] * features['IMG'][q_sub[nodes[:, 0]]],
+                   features['Text'][nodes[:, 1]] * features['Text'][q_sub[nodes[:, 0]]]), dim=-1)
+            scores = self.W_final(mm_hidden).squeeze(-1)
+        else:
+            scores = self.W_final(hidden).squeeze(-1)
         scores_all = torch.zeros((n, self.loader.n_ent)).cuda()  # non_visited entities have 0 scores
         scores_all[[nodes[:, 0], nodes[:, 1]]] = scores
         return scores_all
