@@ -5,6 +5,7 @@ from nni.experiment import Experiment
 parser = argparse.ArgumentParser(description='opt')
 parser.add_argument("--data_choice","-d", default="FBYG15K", type=str, choices=["DBP15K", "DWY", "FBYG15K", "FBDB15K"],
                     help="Experiment path")
+parser.add_argument("--data_rate", type=float, default=0.8)
 parser.add_argument("--gpu", type=int, default=0,
                     help="Which GPU to use?")
 parser.add_argument("--experiment_name", "-e", type=str, default="default",
@@ -28,7 +29,7 @@ search_space = {
 
 
 experiment = Experiment('local')
-cmd = f'python ./train.py --nni 1 --data_choice {params.data_choice}'
+cmd = f'python ./train.py --nni 1 --data_choice {params.data_choice} --data_rate {params.data_rate}'
 
 experiment.config.trial_command = cmd
 experiment.config.trial_code_directory = '.'
