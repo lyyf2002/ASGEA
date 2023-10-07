@@ -10,7 +10,7 @@ from collections import OrderedDict
 
 parser = argparse.ArgumentParser(description="Parser for MASEA")
 parser.add_argument("--data_path", default="../data/mmkg", type=str, help="Experiment path")
-parser.add_argument("--data_choice", default="FBDB15K", type=str, choices=["DBP15K", "DWY", "FBYG15K", "FBDB15K"],
+parser.add_argument("--data_choice", default="FBYG15K", type=str, choices=["DBP15K", "DWY", "FBYG15K", "FBDB15K"],
                     help="Experiment path")
 parser.add_argument("--data_rate", type=float, default=0.8, choices=[0.2, 0.3, 0.5, 0.8], help="training set rate")
 parser.add_argument('--seed', type=str, default=1234)
@@ -27,7 +27,7 @@ parser.add_argument('--n_layer', type=int, default=5)
 parser.add_argument('--n_batch', type=int, default=2)
 parser.add_argument("--lamda", type=float, default=0.5)
 
-parser.add_argument("--MLP_hidden_dim", type=int, default=16)
+parser.add_argument("--MLP_hidden_dim", type=int, default=256)
 parser.add_argument("--MLP_num_layers", type=int, default=2)
 parser.add_argument("--MLP_dropout", type=float, default=0.2)
 

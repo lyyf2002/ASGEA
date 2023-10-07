@@ -6,7 +6,7 @@ from scipy.sparse import csr_matrix
 import numpy as np
 from collections import defaultdict
 from data import load_eva_data
-
+import pickle
 
 class DataLoader:
     def __init__(self, args):
@@ -18,6 +18,9 @@ class DataLoader:
         self.rel_features = KGs['rel_features']
         self.att_features = KGs['att_features']
         self.att_ids = [i[0] for i in self.att_features]
+        self.test_cache_url = os.path.join(args.data_path, args.data_choice, args.data_split, f'test_{args.data_rate}.pkl')
+        self.test_cache = {}
+
         if args.mm:
             if os.path.exists(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy')):
                 self.att_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), allow_pickle=True)
@@ -55,6 +58,11 @@ class DataLoader:
 
         self.n_test = len(self.test_data)
         self.shuffle_train()
+
+        if os.path.exists(self.test_cache_url):
+            self.test_cache = pickle.load(open(self.test_cache_url, 'rb'))
+        else:
+            self.preprocess_test()
 
     def bert_feature(self, ):
         from transformers import BertTokenizer, BertModel
@@ -150,7 +158,7 @@ class DataLoader:
     #         answers.append(np.array(trip_hr[key]))
     #     return queries, answers
 
-    def get_neighbors(self, nodes, mode='train'):
+    def get_neighbors(self, nodes, mode='train', n_hop=0):
         if mode == 'train':
             KG = self.KG
             M_sub = self.M_sub
@@ -159,7 +167,7 @@ class DataLoader:
             M_sub = self.tM_sub
 
         # nodes: n_node x 2 with (batch_idx, node_idx)
-        node_1hot = csr_matrix((np.ones(len(nodes)), (nodes[:, 1], nodes[:, 0])), shape=(self.n_ent, nodes.shape[0]))
+        node_1hot = csr_matrix((np.ones(len(nodes)), (nodes[:, 1], nodes[:, 0])), shape=(self.n_ent, nodes.shape[0])) # (n_ent, batch_size)
         edge_1hot = M_sub.dot(node_1hot)
         edges = np.nonzero(edge_1hot)
         sampled_edges = np.concatenate([np.expand_dims(edges[1], 1), KG[edges[0]]],
@@ -225,3 +233,33 @@ class DataLoader:
         # self.KG,self.M_sub = self.load_graph(self.fact_data)
 
         print('n_train:', self.n_train, 'n_test:', self.n_test)
+
+    def preprocess_test(self, ):
+        batch_size = self.n_batch
+        n_data = self.n_test
+        n_batch = n_data // batch_size + (n_data % batch_size > 0)
+        for i in range(n_batch):
+            start = i * batch_size
+            end = min(n_data, (i + 1) * batch_size)
+            batch_idx = np.arange(start, end)
+            triple = self.loader.get_batch(batch_idx, data='test')
+            subs, rels, objs = triple[:, 0], triple[:, 1], triple[:, 2]
+            is_lefts = rels == self.n_rel * 2 + 1
+            n = len(subs)
+            q_sub = torch.LongTensor(subs).cuda()
+            nodes = torch.cat([torch.arange(n).unsqueeze(1).cuda(), q_sub.unsqueeze(1)], 1)
+            for i in range(self.n_layer):
+                nodes, edges, old_nodes_new_idx = self.loader.get_neighbors(nodes.data.cpu().numpy(), mode='test',
+                                                                            n_hop=i)
+
+    # def save_cache(self):
+    #     with open(self.cache_path, 'wb') as f:
+    #         pickle.dump(self.edge_cache, f)
+    #
+    # def load_cache(self):
+    #     with open(self.cache_path, 'rb') as f:
+    #         self.edge_cache = pickle.load(f)
+    #         print("load cache from {}".format(self.cache_path))
+
+
+if __name__ == '__main__':

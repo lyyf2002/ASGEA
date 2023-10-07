@@ -66,7 +66,7 @@ class MMFeature(nn.Module):
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.params = params
         self.n_ent = n_ent
-        self.feature_mapping = FeatureMapping(params)
+        # self.feature_mapping = FeatureMapping(params)
         self.text_model = Text_enc(params)
         self.in_dims = {'Stru': params.stru_dim, 'Text': params.text_dim, 'IMG': params.img_dim}
         self.out_dim = params.hidden_dim
@@ -179,7 +179,7 @@ class MASGNN(torch.nn.Module):
 
         scores_all = []
         for i in range(self.n_layer):
-            nodes, edges, old_nodes_new_idx = self.loader.get_neighbors(nodes.data.cpu().numpy(), mode=mode)
+            nodes, edges, old_nodes_new_idx = self.loader.get_neighbors(nodes.data.cpu().numpy(), mode=mode,n_hop=i)
             # print(nodes)
             # print(edges)
             # print(old_nodes_new_idx)
