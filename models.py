@@ -2,8 +2,7 @@ import torch
 import torch.nn as nn
 from torch_scatter import scatter
 import torch.nn.functional as F
-from torch_geometric.utils import (get_laplacian, to_scipy_sparse_matrix,
-                                   to_undirected, to_dense_adj,bipartite_subgraph, softmax)
+from torch_geometric.utils import softmax
 from torch_geometric.nn.models import MLP
 class Text_enc(nn.Module):
     def __init__(self, params):
@@ -158,7 +157,7 @@ class MASGNN(torch.nn.Module):
             self.mmfeature = MMFeature(self.n_ent, params)
 
 
-    def forward(self, subs, mode='train'):
+    def forward(self, subs, mode='train',batch_idx=None):
         n = len(subs)
         q_sub = torch.LongTensor(subs).cuda()
         nodes = torch.cat([torch.arange(n).unsqueeze(1).cuda(), q_sub.unsqueeze(1)], 1)
@@ -179,7 +178,10 @@ class MASGNN(torch.nn.Module):
 
         scores_all = []
         for i in range(self.n_layer):
-            nodes, edges, old_nodes_new_idx = self.loader.get_neighbors(nodes.data.cpu().numpy(), mode=mode,n_hop=i)
+            if mode == 'train':
+                nodes, edges, old_nodes_new_idx = self.loader.get_neighbors(nodes.data.cpu().numpy(), mode=mode,n_hop=i)
+            else:
+                nodes, edges, old_nodes_new_idx = self.loader.get_test_cache(batch_idx,i)
             # print(nodes)
             # print(edges)
             # print(old_nodes_new_idx)

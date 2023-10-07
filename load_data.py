@@ -157,6 +157,119 @@ class DataLoader:
     #         queries.append(key)
     #         answers.append(np.array(trip_hr[key]))
     #     return queries, answers
+    # def get_subgraphs(self, head_nodes, mode='transductive', layer=3):
+    #     all_edges = []
+    #     avg_subgraph = 0
+    #     for index in range(len(head_nodes)):
+    #         all_edge, subgraph_size = self.get_subgraph(head_nodes, index, layer, mode, tail_nodes)
+    #         all_edges.append(all_edge)
+    #         # reverse_edge, subgraph_size = self.get_subgraph(tail_nodes, index, layer, mode, head_nodes)
+    #         # all_edges.append(reverse_edge)
+    #         # print(subgraph_size)
+    #         avg_subgraph += subgraph_size
+    #     avg_subgraph /= len(head_nodes)
+    #     # print('avg size:',avg_subgraph)
+    #     all_edges = torch.cat(all_edges, dim=0)
+    #     all_edges = torch.unique(all_edges, dim=0)
+    #     # reverse_edges = all_edges[:,[0,3,2,1]]
+    #     # reverse_edges[:,2] = torch.where(all_edges[:,2]>=self.n_rel,all_edges[:,2]-self.n_rel,all_edges[:,2]+self.n_rel)
+    #     # all_edges = torch.cat((all_edges,reverse_edges),dim=0)
+    #     # head_nodes, head_index = torch.unique(all_edges[:, [0, 1]], dim=0, sorted=True, return_inverse=True)
+    #     # tail_nodes, tail_index = torch.unique(all_edges[:, [0, 3]], dim=0, sorted=True, return_inverse=True)
+    #     all_nodes, all_index = torch.unique(
+    #         torch.cat((all_edges[:, [0, 1]], all_edges[:, [0, 3]], head_nodes, tail_nodes)), dim=0, sorted=True,
+    #         return_inverse=True)
+    #     head_index = all_index[:len(all_edges)]
+    #     tail_index = all_index[len(all_edges):2 * len(all_edges)]
+    #     sub_index = all_index[2 * len(all_edges):2 * len(all_edges) + len(head_nodes)]
+    #     obj_index = all_index[2 * len(all_edges) + len(head_nodes):]
+    #     # mask = all_edges[:, 2] == (self.n_rel * 2)
+    #     # _, old_idx = head_index[mask].sort()
+    #     # old_nodes_new_idx = tail_index[mask][old_idx]
+    #     batch_ids, batch_nodes = torch.unique(all_nodes[:, 0], dim=0, return_counts=True)
+    #
+    #     sampled_edges = torch.cat([all_edges, head_index.unsqueeze(1), tail_index.unsqueeze(1)], 1)
+    #
+    #     return all_nodes, sampled_edges, batch_ids, batch_nodes, sub_index, obj_index
+    #
+    # def get_subgraph(self, head_nodes, index, layer, mode, max_size=500):
+    #     if self.device == 'cuda':
+    #         all_edges = torch.FloatTensor([]).cuda()
+    #     else:
+    #         all_edges = torch.FloatTensor([])
+    #     tail_node = tail_nodes[[index]][:, 1]
+    #     node_ = head_nodes[index][1].item()
+    #     node_pair = (node_, tail_node.item())
+    #     if self.device == 'cuda':
+    #         nodes = torch.LongTensor([[0, node_]]).cuda()
+    #     else:
+    #         nodes = torch.LongTensor([[0, node_]])
+    #     if node_pair not in self.edge_cache:
+    #
+    #         raw_layer_edges = []
+    #         for i in range(layer):
+    #             nodes, edges, old_nodes_new_idx = self.get_neighbors(nodes.data.cpu().numpy())
+    #             if self.device == 'cuda':
+    #
+    #                 raw_layer_edges.append(edges.cpu().numpy())
+    #             else:
+    #                 raw_layer_edges.append(edges.numpy())
+    #         # self.edge_cache[node_] = raw_layer_edges
+    #     else:
+    #         all_edges, subgraph_size = self.edge_cache[node_pair]
+    #         if self.device == 'cuda':
+    #             all_edges = torch.from_numpy(all_edges).cuda()
+    #         else:
+    #             all_edges = torch.from_numpy(all_edges)
+    #         all_edges = torch.cat(
+    #             [torch.ones(len(all_edges), device=all_edges.device).unsqueeze(1) * index, all_edges[:, 1:4]], 1)
+    #
+    #         return all_edges, subgraph_size
+    #     if self.device == 'cuda':
+    #         raw_layer_edges = [torch.from_numpy(edges).cuda() for edges in raw_layer_edges]
+    #     else:
+    #         raw_layer_edges = [torch.from_numpy(edges) for edges in raw_layer_edges]
+    #     # layer_edges_id = torch.LongTensor([])
+    #     subgraph_size = 0
+    #     for i in reversed(range(layer)):
+    #         # print(raw_layer_edges[i][:, 3].shape)
+    #         # print(raw_layer_edges[i][:, 3].shape[0]*len(tail_node))
+    #         if raw_layer_edges[i][:, 3].shape[0] * len(tail_node) > 2147483640:
+    #
+    #             l_edge = []
+    #             for j in range(len(tail_node)):
+    #
+    #                 select = torch.nonzero(torch.eq(raw_layer_edges[i][:, 3], tail_node[j]))
+    #                 if len(select.shape) > 1:
+    #                     select = select.squeeze(1)
+    #
+    #                 l_edge.append(raw_layer_edges[i][select])
+    #             l_edge = torch.cat(l_edge)
+    #
+    #         else:
+    #
+    #             select = torch.nonzero(torch.eq(raw_layer_edges[i][:, 3], tail_node.unsqueeze(1)))[:, 1]
+    #
+    #             l_edge = raw_layer_edges[i][select]
+    #         if len(l_edge) > max_size:
+    #             l_edge = l_edge[torch.randperm(len(l_edge))][:max_size]
+    #         if self.device == 'cuda':
+    #
+    #             l_edge = torch.cat([torch.ones(len(l_edge)).unsqueeze(1).cuda() * index, l_edge[:, 1:4]], 1)
+    #         else:
+    #             l_edge = torch.cat([torch.ones(len(l_edge)).unsqueeze(1) * index, l_edge[:, 1:4]], 1)
+    #         subgraph_size += len(l_edge)
+    #         # layer_edges_id = torch.cat([layer_edges_id, l_edge[:, 2]])
+    #         all_edges = torch.cat([all_edges, l_edge])
+    #         tail_node = torch.cat([tail_node, torch.unique(l_edge[:, 1])])
+    #         if len(tail_node) == 0:
+    #             break
+    #     if self.device == 'cuda':
+    #         self.edge_cache[node_pair] = all_edges.cpu().numpy(), subgraph_size
+    #     else:
+    #         self.edge_cache[node_pair] = all_edges.numpy(), subgraph_size
+    #
+    #     return all_edges, subgraph_size
 
     def get_neighbors(self, nodes, mode='train', n_hop=0):
         if mode == 'train':
@@ -165,6 +278,7 @@ class DataLoader:
         else:
             KG = self.tKG
             M_sub = self.tM_sub
+            # if self.test_cache
 
         # nodes: n_node x 2 with (batch_idx, node_idx)
         node_1hot = csr_matrix((np.ones(len(nodes)), (nodes[:, 1], nodes[:, 0])), shape=(self.n_ent, nodes.shape[0])) # (n_ent, batch_size)
@@ -235,22 +349,27 @@ class DataLoader:
         print('n_train:', self.n_train, 'n_test:', self.n_test)
 
     def preprocess_test(self, ):
-        batch_size = self.n_batch
+        batch_size = 4
         n_data = self.n_test
         n_batch = n_data // batch_size + (n_data % batch_size > 0)
         for i in range(n_batch):
             start = i * batch_size
             end = min(n_data, (i + 1) * batch_size)
             batch_idx = np.arange(start, end)
-            triple = self.loader.get_batch(batch_idx, data='test')
+            triple = self.get_batch(batch_idx, data='test')
             subs, rels, objs = triple[:, 0], triple[:, 1], triple[:, 2]
-            is_lefts = rels == self.n_rel * 2 + 1
             n = len(subs)
             q_sub = torch.LongTensor(subs).cuda()
             nodes = torch.cat([torch.arange(n).unsqueeze(1).cuda(), q_sub.unsqueeze(1)], 1)
-            for i in range(self.n_layer):
-                nodes, edges, old_nodes_new_idx = self.loader.get_neighbors(nodes.data.cpu().numpy(), mode='test',
-                                                                            n_hop=i)
+            for h in range(5):
+                nodes, edges, old_nodes_new_idx = self.get_neighbors(nodes.data.cpu().numpy(), mode='test',
+                                                                            n_hop=h)
+                self.test_cache[(i, h)] = (nodes, edges, old_nodes_new_idx)
+        pickle.dump(self.test_cache, open(self.test_cache_url, 'wb'))
+
+    def get_test_cache(self, batch_idx, h):
+        return self.test_cache[(batch_idx, h)]
+
 
     # def save_cache(self):
     #     with open(self.cache_path, 'wb') as f:
@@ -260,6 +379,3 @@ class DataLoader:
     #     with open(self.cache_path, 'rb') as f:
     #         self.edge_cache = pickle.load(f)
     #         print("load cache from {}".format(self.cache_path))
-
-
-if __name__ == '__main__':
