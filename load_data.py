@@ -7,7 +7,7 @@ import numpy as np
 from collections import defaultdict
 from data import load_eva_data
 import pickle
-
+from tqdm import tqdm
 class DataLoader:
     def __init__(self, args):
 
@@ -352,19 +352,21 @@ class DataLoader:
         batch_size = 4
         n_data = self.n_test
         n_batch = n_data // batch_size + (n_data % batch_size > 0)
-        for i in range(n_batch):
+        for i in tqdm(range(n_batch)):
             start = i * batch_size
             end = min(n_data, (i + 1) * batch_size)
             batch_idx = np.arange(start, end)
             triple = self.get_batch(batch_idx, data='test')
             subs, rels, objs = triple[:, 0], triple[:, 1], triple[:, 2]
+            print(subs, rels, objs)
             n = len(subs)
             q_sub = torch.LongTensor(subs).cuda()
             nodes = torch.cat([torch.arange(n).unsqueeze(1).cuda(), q_sub.unsqueeze(1)], 1)
             for h in range(5):
                 nodes, edges, old_nodes_new_idx = self.get_neighbors(nodes.data.cpu().numpy(), mode='test',
                                                                             n_hop=h)
-                self.test_cache[(i, h)] = (nodes, edges, old_nodes_new_idx)
+                # to np
+                self.test_cache[(i, h)] = (nodes.cpu().numpy(), edges.cpu().numpy(), old_nodes_new_idx.cpu().numpy())
         pickle.dump(self.test_cache, open(self.test_cache_url, 'wb'))
 
     def get_test_cache(self, batch_idx, h):

@@ -182,6 +182,10 @@ class MASGNN(torch.nn.Module):
                 nodes, edges, old_nodes_new_idx = self.loader.get_neighbors(nodes.data.cpu().numpy(), mode=mode,n_hop=i)
             else:
                 nodes, edges, old_nodes_new_idx = self.loader.get_test_cache(batch_idx,i)
+                # np to tensor
+                nodes = torch.LongTensor(nodes).cuda()
+                edges = torch.LongTensor(edges).cuda()
+                old_nodes_new_idx = torch.LongTensor(old_nodes_new_idx).cuda()
             # print(nodes)
             # print(edges)
             # print(old_nodes_new_idx)
