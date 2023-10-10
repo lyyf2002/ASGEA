@@ -8,6 +8,7 @@ from collections import defaultdict
 from data import load_eva_data
 import pickle
 from tqdm import tqdm
+import lmdb
 class DataLoader:
     def __init__(self, args):
 
@@ -18,7 +19,7 @@ class DataLoader:
         self.rel_features = KGs['rel_features']
         self.att_features = KGs['att_features']
         self.att_ids = [i[0] for i in self.att_features]
-        self.test_cache_url = os.path.join(args.data_path, args.data_choice, args.data_split, f'test_{args.data_rate}.pkl')
+        self.test_cache_url = os.path.join(args.data_path, args.data_choice, args.data_split, f'test_{args.data_rate}')
         self.test_cache = {}
 
         if args.mm:
@@ -60,8 +61,9 @@ class DataLoader:
         self.shuffle_train()
 
         if os.path.exists(self.test_cache_url):
-            self.test_cache = pickle.load(open(self.test_cache_url, 'rb'))
+            self.test_env = lmdb.open(self.test_cache_url)
         else:
+            self.test_env = lmdb.open(self.test_cache_url, map_size=200*1024 * 1024 * 1024, max_dbs=1)
             self.preprocess_test()
 
     def bert_feature(self, ):
@@ -366,11 +368,18 @@ class DataLoader:
                 nodes, edges, old_nodes_new_idx = self.get_neighbors(nodes.data.cpu().numpy(), mode='test',
                                                                             n_hop=h)
                 # to np
-                self.test_cache[(i, h)] = (nodes.cpu().numpy(), edges.cpu().numpy(), old_nodes_new_idx.cpu().numpy())
-        pickle.dump(self.test_cache, open(self.test_cache_url, 'wb'))
+                # self.test_cache[(i, h)] = (nodes.cpu().numpy(), edges.cpu().numpy(), old_nodes_new_idx.cpu().numpy())
+                # use lmdb write
+                with self.test_env.begin(write=True) as txn:
+                    txn.put(f'{i}_{h}'.encode(), pickle.dumps((nodes.cpu().numpy(), edges.cpu().numpy(), old_nodes_new_idx.cpu().numpy())))
+        # pickle.dump(self.test_cache, open(self.test_cache_url, 'wb'))
 
     def get_test_cache(self, batch_idx, h):
-        return self.test_cache[(batch_idx, h)]
+        #use lmdb read
+        with self.test_env.begin(write=False) as txn:
+            nodes, edges, old_nodes_new_idx = pickle.loads(txn.get(f'{batch_idx}_{h}'.encode()))
+        return nodes, edges, old_nodes_new_idx
+        # return self.test_cache[(batch_idx, h)]
 
 
     # def save_cache(self):
