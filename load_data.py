@@ -220,7 +220,10 @@ class DataLoader:
         if data == 'valid':
             return None
         if data == 'test':
-            return self.test_data[batch_idx]
+            if reverse:
+                return self.test_reverse_data[batch_idx]
+            else:
+                return self.test_data[batch_idx]
 
         # subs = []
         # rels = []
