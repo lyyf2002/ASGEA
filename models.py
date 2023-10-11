@@ -158,7 +158,7 @@ class MASGNN(torch.nn.Module):
             self.mmfeature = MMFeature(self.n_ent, params)
 
 
-    def forward(self, subs, mode='train'):
+    def forward(self, subs, mode='train',reverse=False):
         n = len(subs)
         q_sub = torch.LongTensor(subs).cuda()
         nodes = torch.cat([torch.arange(n).unsqueeze(1).cuda(), q_sub.unsqueeze(1)], 1)
@@ -179,7 +179,7 @@ class MASGNN(torch.nn.Module):
 
         scores_all = []
         for i in range(self.n_layer):
-            nodes, edges, old_nodes_new_idx = self.loader.get_neighbors(nodes.data.cpu().numpy(), mode=mode)
+            nodes, edges, old_nodes_new_idx = self.loader.get_neighbors(nodes.data.cpu().numpy(), mode=mode, reverse=reverse,cur_layer=i, n_layer=self.n_layer)
             # print(nodes)
             # print(edges)
             # print(old_nodes_new_idx)

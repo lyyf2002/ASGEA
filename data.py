@@ -51,7 +51,7 @@ class Collator_base(object):
 def load_eva_data(args):
     file_dir = osp.join(args.data_path, args.data_choice, args.data_split)
     lang_list = [1, 2]
-    ent2id_dict, ills, triples, r_hs, r_ts, ids = read_raw_data(file_dir, lang_list)
+    ent2id_dict, ills, triples,split_triples, r_hs, r_ts, ids = read_raw_data(file_dir, lang_list)
     e1 = os.path.join(file_dir, 'ent_ids_1')
     e2 = os.path.join(file_dir, 'ent_ids_2')
     left_ents = get_ids(e1)
@@ -155,7 +155,8 @@ def load_eva_data(args):
         'name_features': name_features,
         'char_features': char_features,
         'input_idx': input_idx,
-        'triples': triples
+        'triples': triples,
+        'split_triples': split_triples
     }, {"left": left_non_train, "right": right_non_train},left_ents,right_ents, train_ill, test_ill, eval_ill, test_ill_
 
 
@@ -315,6 +316,19 @@ def read_raw_data(file_dir, lang=[1, 2]):
                     tups.append(tuple([int(x) for x in params]))
         return tups
 
+    def read_tri(file_paths):
+        tups = []
+        KGs = [[],[]]
+        cur = 0
+        for file_path in file_paths:
+            with open(file_path, "r", encoding="utf-8") as fr:
+                for line in fr:
+                    params = line.strip("\n").split("\t")
+                    tups.append(tuple([int(x) for x in params]))
+                    KGs[cur].append(tuple([int(x) for x in params]))
+            cur += 1
+        return tups, KGs
+
     def read_dict(file_paths):
         ent2id_dict = {}
         ids = []
@@ -329,7 +343,7 @@ def read_raw_data(file_dir, lang=[1, 2]):
         return ent2id_dict, ids
     ent2id_dict, ids = read_dict([file_dir + "/ent_ids_" + str(i) for i in lang])
     ills = read_file([file_dir + "/ill_ent_ids"])
-    triples = read_file([file_dir + "/triples_" + str(i) for i in lang])
+    triples, split_triples = read_tri([file_dir + "/triples_" + str(i) for i in lang])
     r_hs, r_ts = {}, {}
     for (h, r, t) in triples:
         if r not in r_hs:
@@ -339,7 +353,7 @@ def read_raw_data(file_dir, lang=[1, 2]):
         r_hs[r].add(h)
         r_ts[r].add(t)
     assert len(r_hs) == len(r_ts)
-    return ent2id_dict, ills, triples, r_hs, r_ts, ids
+    return ent2id_dict, ills, triples, split_triples, r_hs, r_ts, ids
 
 
 def loadfile(fn, num=1):

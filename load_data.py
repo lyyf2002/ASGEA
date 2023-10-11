@@ -28,7 +28,9 @@ class DataLoader:
                 np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_rel_features.npy'), self.att_rel_features)
         self.name_features = KGs['name_features']
         self.char_features = KGs['char_features']
-        triples = KGs['triples']
+        # triples = KGs['triples']
+        KG1_triples = KGs['split_triples'][0]
+        KG2_triples = KGs['split_triples'][1]
 
         self.left_ents = left_ents
         self.right_ents = right_ents
@@ -38,21 +40,29 @@ class DataLoader:
 
         self.filters = defaultdict(lambda: set())
 
-        self.fact_triple = triples
+        # self.fact_triple = triples
+        self.fact_triple1 = KG1_triples
+        self.fact_triple2 = KG2_triples
 
         self.train_triple = self.ill2triples(train_ill)
         self.valid_triple = eval_ill  # None
         self.test_triple = self.ill2triples(test_ill)
 
         # add inverse
-        self.fact_data = self.double_triple(self.fact_triple)
+        # self.fact_data = self.double_triple(self.fact_triple)
+        self.fact_data1 = self.double_triple(self.fact_triple1)
+        self.fact_data2 = self.double_triple(self.fact_triple2)
         # self.train_data = np.array(self.double_triple(self.train_triple))
         # self.valid_data = self.double_triple(self.valid_triple)
-        self.test_data = self.double_triple(self.test_triple, ill=True)
-        self.test_data = np.array(self.test_data)
-        # self.KG,self.M_sub = self.load_graph(self.fact_data) # do it in shuffle_train
-        self.tKG, self.tM_sub = self.load_graph(self.fact_data + self.double_triple(self.train_triple, ill=True))
 
+        # self.test_data = self.double_triple(self.test_triple, ill=True)
+        test_reverse_data = self.reverse_triple(self.test_triple, ill=True)
+
+        self.test_reverse_data = np.array(test_reverse_data)
+        self.test_data = np.array(self.test_triple)
+        # self.KG,self.M_sub = self.load_graph(self.fact_data) # do it in shuffle_train
+        self.KG1, self.KG2, self.M_sub1, self.M_sub2 = self.load_graph(self.fact_data1 ,self.fact_data2)
+        self.till, self.tM_ill = self.load_ill(self.double_triple(self.train_triple, ill=True))
         self.n_test = len(self.test_data)
         self.shuffle_train()
 
@@ -116,47 +126,70 @@ class DataLoader:
             new_triples.append([t, r + self.n_rel if not ill else r+1, h])
         return triples + new_triples
 
-    def load_graph(self, triples):
-        idd = np.concatenate([np.expand_dims(np.arange(self.n_ent), 1), 2 * self.n_rel * np.ones((self.n_ent, 1)),
+    def reverse_triple(self, triples, ill=False):
+        new_triples = []
+        for triple in triples:
+            h, r, t = triple
+            new_triples.append([t, r + self.n_rel if not ill else r+1, h])
+        return new_triples
+    def load_ill(self, ill):
+        idd = np.concatenate([np.expand_dims(np.arange(self.n_ent), 1),
+                               2 * self.n_rel * np.ones((self.n_ent, 1)),
+                               np.expand_dims(np.arange(self.n_ent), 1)], 1)
+        ill = np.concatenate([np.array(ill), idd], 0)
+        n_ill = len(ill)
+        M_ill = csr_matrix((np.ones((n_ill,)), (np.arange(n_ill), ill[:, 0])),
+                           shape=(n_ill, self.n_ent))
+        return ill,M_ill
+    def load_graph(self, kg1, kg2):
+        idd = np.concatenate([np.expand_dims(np.arange(self.n_ent), 1),
+                              2 * self.n_rel * np.ones((self.n_ent, 1)),
                               np.expand_dims(np.arange(self.n_ent), 1)], 1)
+        KG1 = np.concatenate([np.array(kg1), idd], 0)
+        KG2 = np.concatenate([np.array(kg2), idd], 0)
 
-        KG = np.concatenate([np.array(triples), idd], 0)
-        n_fact = len(KG)
-        M_sub = csr_matrix((np.ones((n_fact,)), (np.arange(n_fact), KG[:, 0])),
-                           shape=(n_fact, self.n_ent))
-        return KG, M_sub
+        # KG = np.concatenate([np.array(triples), idd], 0)
+        # n_fact = len(KG)
+        n_fact1 = len(KG1)
+        n_fact2 = len(KG2)
 
-    # def load_test_graph(self, triples):
-    #     idd = np.concatenate([np.expand_dims(np.arange(self.n_ent), 1), 2 * self.n_rel * np.ones((self.n_ent, 1)),
-    #                           np.expand_dims(np.arange(self.n_ent), 1)], 1)
-    #
-    #     self.tKG = np.concatenate([np.array(triples), idd], 0)
-    #     self.tn_fact = len(self.tKG)
-    #     self.tM_sub = csr_matrix((np.ones((self.tn_fact,)), (np.arange(self.tn_fact), self.tKG[:, 0])),
-    #                              shape=(self.tn_fact, self.n_ent))
+        # M_sub = csr_matrix((np.ones((n_fact,)), (np.arange(n_fact), KG[:, 0])),
+        #                    shape=(n_fact, self.n_ent))
+        M_sub1 = csr_matrix((np.ones((n_fact1,)), (np.arange(n_fact1), KG1[:, 0])),
+                            shape=(n_fact1, self.n_ent))
+        M_sub2 = csr_matrix((np.ones((n_fact2,)), (np.arange(n_fact2), KG2[:, 0])),
+                            shape=(n_fact2, self.n_ent))
 
-    # def load_query(self, triples):
-    #     triples.sort(key=lambda x: (x[0], x[1]))
-    #     trip_hr = defaultdict(lambda: list())
-    #
-    #     for trip in triples:
-    #         h, r, t = trip
-    #         trip_hr[(h, r)].append(t)
-    #
-    #     queries = []
-    #     answers = []
-    #     for key in trip_hr:
-    #         queries.append(key)
-    #         answers.append(np.array(trip_hr[key]))
-    #     return queries, answers
+        return KG1, KG2, M_sub1, M_sub2
 
-    def get_neighbors(self, nodes, mode='train'):
-        if mode == 'train':
-            KG = self.KG
-            M_sub = self.M_sub
+
+    def get_neighbors(self, nodes, mode='train',reverse=False,cur_layer=None, n_layer=None):
+        if reverse:
+            KG1 = self.KG2
+            KG2 = self.KG1
+            M_sub1 = self.M_sub2
+            M_sub2 = self.M_sub1
         else:
-            KG = self.tKG
-            M_sub = self.tM_sub
+            KG1 = self.KG1
+            KG2 = self.KG2
+            M_sub1 = self.M_sub1
+            M_sub2 = self.M_sub2
+        if mode == 'train':
+            ill = self.ill
+            M_ill = self.M_ill
+        else:
+            ill = self.till
+            M_ill = self.tM_ill
+        mid_layer = n_layer // 2
+        if cur_layer == mid_layer:
+            KG = ill
+            M_sub = M_ill
+        elif cur_layer < mid_layer:
+            KG = KG1
+            M_sub = M_sub1
+        else:
+            KG = KG2
+            M_sub = M_sub2
 
         # nodes: n_node x 2 with (batch_idx, node_idx)
         node_1hot = csr_matrix((np.ones(len(nodes)), (nodes[:, 1], nodes[:, 0])), shape=(self.n_ent, nodes.shape[0]))
@@ -178,9 +211,12 @@ class DataLoader:
 
         return tail_nodes, sampled_edges, old_nodes_new_idx
 
-    def get_batch(self, batch_idx, steps=2, data='train'):
+    def get_batch(self, batch_idx, reverse=False, data='train'):
         if data == 'train':
-            return self.train_data[batch_idx]
+            if reverse:
+                return self.train_reverse_data[batch_idx]
+            else:
+                return self.train_data[batch_idx]
         if data == 'valid':
             return None
         if data == 'test':
@@ -212,11 +248,13 @@ class DataLoader:
         query_triple = self.train_triple[len(self.train_triple) * 3 // 4:]
         # add inverse triples
         support_triple = self.double_triple(support_triple, ill=True)
-        query_triple = self.double_triple(query_triple, ill=True)
+        # query_triple = self.double_triple(query_triple, ill=True)
+        query_reverse_triple = self.reverse_triple(query_triple, ill=True)
         # now the fact triples are fact_triple + support_triple
-        self.KG, self.M_sub = self.load_graph(self.fact_data + support_triple)
+        self.ill,self.M_ill = self.load_ill(support_triple)
         self.n_train = len(query_triple)
         self.train_data = np.array(query_triple)
+        self.train_reverse_data = np.array(query_reverse_triple)
 
         # # increase the ratio of fact_data, e.g., 3/4->4/5, can increase the performance
         # self.fact_data = self.double_triple(all_triple[:n_all * 3 // 4].tolist())

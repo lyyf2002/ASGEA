@@ -62,6 +62,28 @@ class BaseModel(object):
                 X[flag] = np.random.random()
                 p.data.copy_(X)
             epoch_loss += loss.item()
+        for i in tqdm(range(n_batch)):
+            start = i*batch_size
+            end = min(self.n_train, (i+1)*batch_size)
+            batch_idx = np.arange(start, end)
+            triple = self.loader.get_batch(batch_idx,reverse=True)
+
+            self.model.zero_grad()
+            scores = self.model(triple[:,0])
+
+            pos_scores = scores[[torch.arange(len(scores)).cuda(),torch.LongTensor(triple[:,2]).cuda()]]
+            max_n = torch.max(scores, 1, keepdim=True)[0]
+            loss = torch.sum(- pos_scores + max_n + torch.log(torch.sum(torch.exp(scores - max_n),1)))
+            loss.backward()
+            self.optimizer.step()
+
+            # avoid NaN
+            for p in self.model.parameters():
+                X = p.data.clone()
+                flag = X != X
+                X[flag] = np.random.random()
+                p.data.copy_(X)
+            epoch_loss += loss.item()
         self.scheduler.step()
         self.t_time += time.time() - t_time
 
@@ -80,6 +102,17 @@ class BaseModel(object):
             end = min(n_data, (i+1)*batch_size)
             batch_idx = np.arange(start, end)
             triple = self.loader.get_batch(batch_idx, data='test')
+            subs, rels, objs = triple[:,0],triple[:,1],triple[:,2]
+            is_lefts = rels == self.n_rel*2+1
+            scores = self.model(subs,'test').data.cpu().numpy()
+
+            ranks = cal_ranks(scores, objs, is_lefts, len(self.left_ents))
+            ranking += ranks
+        for i in range(n_batch):
+            start = i*batch_size
+            end = min(n_data, (i+1)*batch_size)
+            batch_idx = np.arange(start, end)
+            triple = self.loader.get_batch(batch_idx,reverse=True, data='test')
             subs, rels, objs = triple[:,0],triple[:,1],triple[:,2]
             is_lefts = rels == self.n_rel*2+1
             scores = self.model(subs,'test').data.cpu().numpy()
