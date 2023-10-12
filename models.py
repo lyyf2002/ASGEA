@@ -187,7 +187,7 @@ class MASGNN(torch.nn.Module):
             # print(h0)
             hidden = self.gnn_layers[i](hidden, edges, nodes.size(0), old_nodes_new_idx)
             # print(hidden)
-
+            print('nodes size:', nodes.size(0), 'edges size:', edges.size(0))
             if self.mm:
                 h0 = mean_feature[nodes[:, 1]].unsqueeze(0).cuda().index_copy_(1, old_nodes_new_idx, h0)
             else:

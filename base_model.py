@@ -69,7 +69,7 @@ class BaseModel(object):
             triple = self.loader.get_batch(batch_idx,reverse=True)
 
             self.model.zero_grad()
-            scores = self.model(triple[:,0])
+            scores = self.model(triple[:,0],reverse=True)
 
             pos_scores = scores[[torch.arange(len(scores)).cuda(),torch.LongTensor(triple[:,2]).cuda()]]
             max_n = torch.max(scores, 1, keepdim=True)[0]
@@ -115,7 +115,7 @@ class BaseModel(object):
             triple = self.loader.get_batch(batch_idx,reverse=True, data='test')
             subs, rels, objs = triple[:,0],triple[:,1],triple[:,2]
             is_lefts = rels == self.n_rel*2+1
-            scores = self.model(subs,'test').data.cpu().numpy()
+            scores = self.model(subs,'test',reverse=True).data.cpu().numpy()
 
             ranks = cal_ranks(scores, objs, is_lefts, len(self.left_ents))
             ranking += ranks
