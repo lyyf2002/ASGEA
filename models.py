@@ -162,7 +162,8 @@ class MASGNN(torch.nn.Module):
         q_sub = torch.LongTensor(subs).cuda()
         n = q_sub.shape[0]
         nodes = torch.cat([torch.arange(n).unsqueeze(1).cuda(), q_sub.unsqueeze(1)], 1)
-        nodess, edgess, old_nodes_new_idxs,old_nodes = self.loader.get_subgraphs(q_sub, layer=self.n_layer,mode=mode)
+        # nodess, edgess, old_nodes_new_idxs,old_nodes = self.loader.get_subgraphs(q_sub, layer=self.n_layer,mode=mode)
+        nodess, edgess, old_nodes_new_idxs, old_nodes = self.loader.get_cache(batch_idx, mode=mode)
 
 
 

@@ -19,8 +19,7 @@ class DataLoader:
         self.rel_features = KGs['rel_features']
         self.att_features = KGs['att_features']
         self.att_ids = [i[0] for i in self.att_features]
-        self.test_cache_url = os.path.join(args.data_path, args.data_choice, args.data_split, f'test_{args.data_rate}')
-        self.test_cache = {}
+        self.cache_url = os.path.join(args.data_path, args.data_choice, args.data_split, f'cache_{args.data_rate}_{args.n_batch}')
 
         if args.mm:
             if os.path.exists(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy')):
@@ -39,6 +38,7 @@ class DataLoader:
 
         self.n_ent = ent_num
         self.n_rel = rel_num
+        self.n_layer = args.n_layer
 
         self.filters = defaultdict(lambda: set())
 
@@ -79,11 +79,13 @@ class DataLoader:
         self.n_train = len(self.train_data)
         # self.shuffle_train()
 
-        # if os.path.exists(self.test_cache_url):
-        #     self.test_env = lmdb.open(self.test_cache_url)
-        # else:
-        #     self.test_env = lmdb.open(self.test_cache_url, map_size=200*1024 * 1024 * 1024, max_dbs=1)
-        #     self.preprocess_test()
+        if os.path.exists(self.cache_url):
+            self.env = lmdb.open(self.cache_url)
+        else:
+            self.env = lmdb.open(self.cache_url, map_size=200*1024 * 1024 * 1024, max_dbs=1)
+            self.preprocess(mode='train')
+            self.preprocess(mode='test')
+
 
     def bert_feature(self, ):
         from transformers import BertTokenizer, BertModel
@@ -198,9 +200,10 @@ class DataLoader:
             reverse_support[:, 1] += 1
             support = torch.cat((support, reverse_support), dim=0)
             KG = torch.cat((support,self.fact_data),dim=0)
-            KG.long()
+
         else:
             KG = self.tKG
+            KG = torch.from_numpy(KG).cuda()
         row, col = KG[:, 0], KG[:, 2]
         node_mask = row.new_empty(self.n_ent, dtype=torch.bool)
         # edge_mask = row.new_empty(row.size(0), dtype=torch.bool)
@@ -346,36 +349,45 @@ class DataLoader:
     #
     #     print('n_train:', self.n_train, 'n_test:', self.n_test)
 
-    def preprocess_test(self, ):
+    def preprocess(self, mode='train'):
         batch_size = 4
-        n_data = self.n_test
+        if mode == 'test':
+            n_data = self.n_test
+        else:
+            n_data = self.n_train
         n_batch = n_data // batch_size + (n_data % batch_size > 0)
         for i in tqdm(range(n_batch)):
             start = i * batch_size
             end = min(n_data, (i + 1) * batch_size)
             batch_idx = np.arange(start, end)
-            triple = self.get_batch(batch_idx, data='test')
+            triple = self.get_batch(batch_idx, data=mode)
             subs, rels, objs = triple[:, 0], triple[:, 1], triple[:, 2]
             print(subs, rels, objs)
-            n = len(subs)
             q_sub = torch.LongTensor(subs).cuda()
-            nodes = torch.cat([torch.arange(n).unsqueeze(1).cuda(), q_sub.unsqueeze(1)], 1)
-            for h in range(5):
-                nodes, edges, old_nodes_new_idx = self.get_neighbors(nodes.data.cpu().numpy(), mode='test',
-                                                                            n_hop=h)
-                # to np
-                # self.test_cache[(i, h)] = (nodes.cpu().numpy(), edges.cpu().numpy(), old_nodes_new_idx.cpu().numpy())
-                # use lmdb write
-                with self.test_env.begin(write=True) as txn:
-                    txn.put(f'{i}_{h}'.encode(), pickle.dumps((nodes.cpu().numpy(), edges.cpu().numpy(), old_nodes_new_idx.cpu().numpy())))
+            nodess, edgess, old_nodes_new_idxs, old_nodes = self.get_subgraphs(q_sub, layer=self.n_layer, mode=mode)
+            # to np
+            for i in range(self.n_layer):
+                nodess[i] = nodess[i].cpu().numpy()
+                edgess[i] = edgess[i].cpu().numpy()
+                old_nodes_new_idxs[i] = old_nodes_new_idxs[i].cpu().numpy()
+                old_nodes[i] = old_nodes[i].cpu().numpy()
+            # use lmdb write
+
+            with self.env.begin(write=True) as txn:
+                txn.put(f'{mode}_{i}'.encode(), pickle.dumps((nodess, edgess, old_nodes_new_idxs, old_nodes)))
+
         # pickle.dump(self.test_cache, open(self.test_cache_url, 'wb'))
 
-    def get_test_cache(self, batch_idx, h):
+    def get_cache(self, batch_idx, mode='train'):
         #use lmdb read
-        with self.test_env.begin(write=False) as txn:
-            nodes, edges, old_nodes_new_idx = pickle.loads(txn.get(f'{batch_idx}_{h}'.encode()))
-        return nodes, edges, old_nodes_new_idx
-        # return self.test_cache[(batch_idx, h)]
+        with self.env.begin(write=False) as txn:
+            nodess, edgess, old_nodes_new_idxs, old_nodes = pickle.loads(txn.get(f'{mode}_{batch_idx}'.encode()))
+        for i in range(self.n_layer):
+            nodess[i] = torch.LongTensor(nodess[i]).cuda()
+            edgess[i] = torch.LongTensor(edgess[i]).cuda()
+            old_nodes_new_idxs[i] = torch.LongTensor(old_nodes_new_idxs[i]).cuda()
+            old_nodes[i] = torch.LongTensor(old_nodes[i]).cuda()
+        return nodess, edgess, old_nodes_new_idxs, old_nodes
 
 
     # def save_cache(self):
