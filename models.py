@@ -105,7 +105,7 @@ class GNNLayer(torch.nn.Module):
 
         self.W_h = nn.Linear(in_dim, out_dim, bias=False)
 
-    def forward(self, hidden, edges, n_node, old_nodes_new_idx):
+    def forward(self, hidden, edges, n_node):
         # edges:  [batch_idx, head, rela, tail, old_idx, new_idx]
         sub = edges[:, 4]
         rel = edges[:, 2]
@@ -158,9 +158,12 @@ class MASGNN(torch.nn.Module):
 
 
     def forward(self, subs, mode='train',batch_idx=None):
-        n = len(subs)
+
         q_sub = torch.LongTensor(subs).cuda()
+        n = q_sub.shape[0]
         nodes = torch.cat([torch.arange(n).unsqueeze(1).cuda(), q_sub.unsqueeze(1)], 1)
+        nodess, edgess, old_nodes_new_idxs,old_nodes = self.loader.get_subgraphs(q_sub, layer=self.n_layer,mode=mode)
+
 
 
 
@@ -178,26 +181,30 @@ class MASGNN(torch.nn.Module):
 
         scores_all = []
         for i in range(self.n_layer):
-            if mode == 'train':
-                nodes, edges, old_nodes_new_idx = self.loader.get_neighbors(nodes.data.cpu().numpy(), mode=mode,n_hop=i)
-            else:
-                nodes, edges, old_nodes_new_idx = self.loader.get_test_cache(batch_idx,i)
-                # np to tensor
-                nodes = torch.LongTensor(nodes).cuda()
-                edges = torch.LongTensor(edges).cuda()
-                old_nodes_new_idx = torch.LongTensor(old_nodes_new_idx).cuda()
+            nodes = nodess[i]
+            edges = edgess[i]
+            old_nodes_new_idx = old_nodes_new_idxs[i]
+            old_node = old_nodes[i]
+            # if mode == 'train':
+            #     nodes, edges, old_nodes_new_idx = self.loader.get_neighbors(nodes.data.cpu().numpy(), mode=mode,n_hop=i)
+            # else:
+            #     nodes, edges, old_nodes_new_idx = self.loader.get_test_cache(batch_idx,i)
+            #     # np to tensor
+            #     nodes = torch.LongTensor(nodes).cuda()
+            #     edges = torch.LongTensor(edges).cuda()
+            #     old_nodes_new_idx = torch.LongTensor(old_nodes_new_idx).cuda()
             # print(nodes)
             # print(edges)
             # print(old_nodes_new_idx)
             # print(hidden)
             # print(h0)
-            hidden = self.gnn_layers[i](hidden, edges, nodes.size(0), old_nodes_new_idx)
+            hidden = self.gnn_layers[i](hidden, edges, nodes.size(0))
             # print(hidden)
 
             if self.mm:
-                h0 = mean_feature[nodes[:, 1]].unsqueeze(0).cuda().index_copy_(1, old_nodes_new_idx, h0)
+                h0 = mean_feature[nodes[:, 1]].unsqueeze(0).cuda().index_copy_(1, old_nodes_new_idx, h0[:,old_node])
             else:
-                h0 = torch.zeros(1, nodes.size(0), hidden.size(1)).cuda().index_copy_(1, old_nodes_new_idx, h0)
+                h0 = torch.zeros(1, nodes.size(0), hidden.size(1)).cuda().index_copy_(1, old_nodes_new_idx, h0[:, old_node])
             hidden = self.dropout(hidden)
             hidden, h0 = self.gate(hidden.unsqueeze(0), h0)
             hidden = hidden.squeeze(0)
@@ -208,7 +215,7 @@ class MASGNN(torch.nn.Module):
             scores = self.W_final(mm_hidden).squeeze(-1)
         else:
             scores = self.W_final(hidden).squeeze(-1)
-        scores_all = torch.zeros((n, self.loader.n_ent)).cuda()  # non_visited entities have 0 scores
+        scores_all = torch.zeros((len(subs), self.loader.n_ent)).cuda()  # non_visited entities have 0 scores
         scores_all[[nodes[:, 0], nodes[:, 1]]] = scores
         return scores_all
 
