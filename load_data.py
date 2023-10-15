@@ -366,11 +366,11 @@ class DataLoader:
             q_sub = torch.LongTensor(subs).cuda()
             nodess, edgess, old_nodes_new_idxs, old_nodes = self.get_subgraphs(q_sub, layer=self.n_layer, mode=mode)
             # to np
-            for i in range(self.n_layer):
-                nodess[i] = nodess[i].cpu().numpy()
-                edgess[i] = edgess[i].cpu().numpy()
-                old_nodes_new_idxs[i] = old_nodes_new_idxs[i].cpu().numpy()
-                old_nodes[i] = old_nodes[i].cpu().numpy()
+            for j in range(self.n_layer):
+                nodess[j] = nodess[j].cpu().numpy()
+                edgess[j] = edgess[j].cpu().numpy()
+                old_nodes_new_idxs[j] = old_nodes_new_idxs[j].cpu().numpy()
+                old_nodes[j] = old_nodes[j].cpu().numpy()
             # use lmdb write
 
             with self.env.begin(write=True) as txn:
