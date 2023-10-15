@@ -59,6 +59,7 @@ class DataLoader:
 
         # self.KG,self.M_sub = self.load_graph(self.fact_data) # do it in shuffle_train
         self.tKG, self.tM_sub = self.load_graph(self.fact_data + self.double_triple(self.train_triple, ill=True))
+        self.tKG = torch.LongTensor(self.tKG).cuda()
 
         # in torch
         idd = np.concatenate([np.expand_dims(np.arange(self.n_ent), 1), 2 * self.n_rel * np.ones((self.n_ent, 1)),
@@ -203,7 +204,6 @@ class DataLoader:
 
         else:
             KG = self.tKG
-            KG = torch.from_numpy(KG).cuda()
         row, col = KG[:, 0], KG[:, 2]
         node_mask = row.new_empty(self.n_ent, dtype=torch.bool)
         # edge_mask = row.new_empty(row.size(0), dtype=torch.bool)
