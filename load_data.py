@@ -1,5 +1,6 @@
 import os
 import random
+import time
 
 import torch
 from scipy.sparse import csr_matrix
@@ -159,12 +160,15 @@ class DataLoader:
     def get_subgraphs(self, head_nodes, layer=3,mode='train'):
         all_edges = []
         for index,head_node in enumerate(head_nodes):
+            t = time.time()
             all_edge = self.get_subgraph(head_node, index, layer, mode)
+            print('subgraph',index,'time',time.time()-t)
             all_edges.append(all_edge)
         all_nodes = []
         layer_edges = []
         old_nodes_new_idxs = []
         old_nodes = []
+        t = time.time()
         for i in range(layer):
             edges = []
             for j in range(len(all_edges)):
@@ -184,7 +188,7 @@ class DataLoader:
             layer_edges.append(sampled_edges)
             old_nodes_new_idxs.append(old_nodes_new_idx)
             old_nodes.append(old_node)
-
+        print('get head and tail time',time.time()-t)
 
         return all_nodes, layer_edges, old_nodes_new_idxs, old_nodes
     #

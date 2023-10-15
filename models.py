@@ -1,3 +1,5 @@
+import time
+
 import torch
 import torch.nn as nn
 from torch_scatter import scatter
@@ -162,7 +164,9 @@ class MASGNN(torch.nn.Module):
         q_sub = torch.LongTensor(subs).cuda()
         n = q_sub.shape[0]
         nodes = torch.cat([torch.arange(n).unsqueeze(1).cuda(), q_sub.unsqueeze(1)], 1)
+        t = time.time()
         nodess, edgess, old_nodes_new_idxs,old_nodes = self.loader.get_subgraphs(q_sub, layer=self.n_layer,mode=mode)
+        print('subgraph time:',time.time()-t)
 
 
 
@@ -181,6 +185,7 @@ class MASGNN(torch.nn.Module):
 
         scores_all = []
         for i in range(self.n_layer):
+            t = time.time()
             nodes = nodess[i]
             edges = edgess[i]
             old_nodes_new_idx = old_nodes_new_idxs[i]
@@ -208,6 +213,7 @@ class MASGNN(torch.nn.Module):
             hidden = self.dropout(hidden)
             hidden, h0 = self.gate(hidden.unsqueeze(0), h0)
             hidden = hidden.squeeze(0)
+            print('layer ',i,'time',time.time()-t,len(edges))
         # hidden -> (len(nodes), hidden_dim)
         if self.mm:
             mm_hidden = torch.cat((hidden, features['IMG'][nodes[:, 1]] * features['IMG'][q_sub[nodes[:, 0]]],

@@ -48,12 +48,14 @@ class BaseModel(object):
 
             self.model.zero_grad()
             scores = self.model(triple[:,0])
+            t = time.time()
 
             pos_scores = scores[[torch.arange(len(scores)).cuda(),torch.LongTensor(triple[:,2]).cuda()]]
             max_n = torch.max(scores, 1, keepdim=True)[0]
             loss = torch.sum(- pos_scores + max_n + torch.log(torch.sum(torch.exp(scores - max_n),1)))
             loss.backward()
             self.optimizer.step()
+            print('backward time',time.time()-t)
 
             # avoid NaN
             for p in self.model.parameters():
