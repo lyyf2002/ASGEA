@@ -35,8 +35,8 @@ class BaseModel(object):
 
         batch_size = self.n_batch
         n_batch = self.n_train // batch_size + (self.n_train % batch_size > 0)
-        # if self.shuffle:
-        #     self.loader.shuffle_train()
+        if self.shuffle:
+            self.loader.shuffle_train()
 
         t_time = time.time()
         self.model.train()

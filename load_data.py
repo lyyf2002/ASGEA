@@ -58,7 +58,7 @@ class DataLoader:
         self.train_data = np.array(self.train_data)
 
         # self.KG,self.M_sub = self.load_graph(self.fact_data) # do it in shuffle_train
-        self.tKG, self.tM_sub = self.load_graph(self.fact_data + self.double_triple(self.train_triple, ill=True))
+        self.tKG = self.load_graph(self.fact_data + self.double_triple(self.train_triple, ill=True))
         self.tKG = torch.LongTensor(self.tKG).cuda()
 
         # in torch
@@ -66,19 +66,19 @@ class DataLoader:
                               np.expand_dims(np.arange(self.n_ent), 1)], 1)
         self.fact_data = np.concatenate([np.array(self.fact_data), idd], 0)
         self.fact_data = torch.LongTensor(self.fact_data).cuda()
-        self.node2index = {}
-        for i, triple in enumerate(self.train_triple):
-            h, r, t = triple
-            assert h not in self.node2index
-            assert t not in self.node2index
-            self.node2index[h] = i
-            self.node2index[t] = i
-        self.train_triple = torch.LongTensor(self.train_triple).cuda()
+        # self.node2index = {}
+        # for i, triple in enumerate(self.train_triple):
+        #     h, r, t = triple
+        #     assert h not in self.node2index
+        #     assert t not in self.node2index
+        #     self.node2index[h] = i
+        #     self.node2index[t] = i
+        # self.train_triple = torch.LongTensor(self.train_triple).cuda()
 
 
         self.n_test = len(self.test_data)
         self.n_train = len(self.train_data)
-        # self.shuffle_train()
+        self.shuffle_train()
 
         # if os.path.exists(self.test_cache_url):
         #     self.test_env = lmdb.open(self.test_cache_url)
@@ -151,10 +151,10 @@ class DataLoader:
                               np.expand_dims(np.arange(self.n_ent), 1)], 1)
 
         KG = np.concatenate([np.array(triples), idd], 0)
-        n_fact = len(KG)
-        M_sub = csr_matrix((np.ones((n_fact,)), (np.arange(n_fact), KG[:, 0])),
-                           shape=(n_fact, self.n_ent))
-        return KG, M_sub
+        # n_fact = len(KG)
+        # M_sub = csr_matrix((np.ones((n_fact,)), (np.arange(n_fact), KG[:, 0])),
+        #                    shape=(n_fact, self.n_ent))
+        return KG
 
 
     def get_subgraphs(self, head_nodes, layer=3,mode='train'):
@@ -191,14 +191,15 @@ class DataLoader:
     #
     def get_subgraph(self, head_node, index, layer, mode, max_size=500):
         if mode == 'train':
-            # set false to self.node2index[node]
-            mask = torch.ones(len(self.train_triple), dtype=torch.bool).cuda()
-            mask[self.node2index[head_node.item()]] = False
-            support = self.train_triple[mask]
-            reverse_support = support[:, [2, 1, 0]]
-            reverse_support[:, 1] += 1
-            support = torch.cat((support, reverse_support), dim=0)
-            KG = torch.cat((support,self.fact_data),dim=0)
+        #     # set false to self.node2index[node]
+        #     mask = torch.ones(len(self.train_triple), dtype=torch.bool).cuda()
+        #     mask[self.node2index[head_node.item()]] = False
+        #     support = self.train_triple[mask]
+        #     reverse_support = support[:, [2, 1, 0]]
+        #     reverse_support[:, 1] += 1
+        #     support = torch.cat((support, reverse_support), dim=0)
+        #     KG = torch.cat((support,self.fact_data),dim=0)
+            KG=self.KG
             KG.long()
         else:
             KG = self.tKG
@@ -318,34 +319,36 @@ class DataLoader:
         #     objs[i][answer[batch_idx[i]]] = 1
         # return subs, rels, objs
 
-    # def shuffle_train(self, ):
-    #     # fact_triple = np.array(self.fact_triple)
-    #     # train_triple = np.array(self.train_triple)
-    #     # all_triple = np.concatenate([fact_triple, train_triple], axis=0)
-    #     # n_all = len(all_triple)
-    #     # rand_idx = np.random.permutation(n_all)
-    #     # all_triple = all_triple[rand_idx]
-    #
-    #     # random shuffle train_triples
-    #     random.shuffle(self.train_triple)
-    #     # support/query split 3/1
-    #     support_triple = self.train_triple[:len(self.train_triple) * 3 // 4]
-    #     query_triple = self.train_triple[len(self.train_triple) * 3 // 4:]
-    #     # add inverse triples
-    #     support_triple = self.double_triple(support_triple, ill=True)
-    #     query_triple = self.double_triple(query_triple, ill=True)
-    #     # now the fact triples are fact_triple + support_triple
-    #     self.KG, self.M_sub = self.load_graph(self.fact_data + support_triple)
-    #     self.n_train = len(query_triple)
-    #     self.train_data = np.array(query_triple)
-    #
-    #     # # increase the ratio of fact_data, e.g., 3/4->4/5, can increase the performance
-    #     # self.fact_data = self.double_triple(all_triple[:n_all * 3 // 4].tolist())
-    #     # self.train_data = np.array(self.double_triple(all_triple[n_all * 3 // 4:].tolist()))
-    #     # self.n_train = len(self.train_data)
-    #     # self.KG,self.M_sub = self.load_graph(self.fact_data)
-    #
-    #     print('n_train:', self.n_train, 'n_test:', self.n_test)
+    def shuffle_train(self, ):
+        # fact_triple = np.array(self.fact_triple)
+        # train_triple = np.array(self.train_triple)
+        # all_triple = np.concatenate([fact_triple, train_triple], axis=0)
+        # n_all = len(all_triple)
+        # rand_idx = np.random.permutation(n_all)
+        # all_triple = all_triple[rand_idx]
+    
+        # random shuffle train_triples
+        random.shuffle(self.train_triple)
+        # support/query split 3/1
+        support_triple = self.train_triple[:len(self.train_triple) * 4 // 5]
+        query_triple = self.train_triple[len(self.train_triple) * 4 // 5:]
+        # add inverse triples
+        support_triple = self.double_triple(support_triple, ill=True)
+        query_triple = self.double_triple(query_triple, ill=True)
+        support = torch.LongTensor(support_triple).cuda()
+        self.KG = torch.cat((support,self.fact_data),dim=0)
+        # now the fact triples are fact_triple + support_triple
+        # self.KG, self.M_sub = self.load_graph(self.fact_data + support_triple)
+        self.n_train = len(query_triple)
+        self.train_data = np.array(query_triple)
+    
+        # # increase the ratio of fact_data, e.g., 3/4->4/5, can increase the performance
+        # self.fact_data = self.double_triple(all_triple[:n_all * 3 // 4].tolist())
+        # self.train_data = np.array(self.double_triple(all_triple[n_all * 3 // 4:].tolist()))
+        # self.n_train = len(self.train_data)
+        # self.KG,self.M_sub = self.load_graph(self.fact_data)
+    
+        print('n_train:', self.n_train, 'n_test:', self.n_test)
 
     def preprocess_test(self, ):
         batch_size = 4
