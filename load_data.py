@@ -330,8 +330,8 @@ class DataLoader:
         # random shuffle train_triples
         random.shuffle(self.train_triple)
         # support/query split 3/1
-        support_triple = self.train_triple[:len(self.train_triple) * 4 // 5]
-        query_triple = self.train_triple[len(self.train_triple) * 4 // 5:]
+        support_triple = self.train_triple[:len(self.train_triple) * 3 // 4]
+        query_triple = self.train_triple[len(self.train_triple) * 3 // 4:]
         # add inverse triples
         support_triple = self.double_triple(support_triple, ill=True)
         query_triple = self.double_triple(query_triple, ill=True)

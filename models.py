@@ -170,11 +170,11 @@ class MASGNN(torch.nn.Module):
         if self.mm:
             features, mean_feature = self.mmfeature(img_features=self.img_features, att_features=self.att_features,
                                                     att_rel_features=self.att_rel_features, att_ids=self.att_ids)
-            hidden = mean_feature[nodes[:, 1]]
-            h0 = mean_feature[nodes[:, 1]].unsqueeze(0)
-        else:
-            h0 = torch.zeros((1, n, self.hidden_dim)).cuda()
-            hidden = torch.zeros(n, self.hidden_dim).cuda()
+            # hidden = mean_feature[nodes[:, 1]]
+        #     h0 = mean_feature[nodes[:, 1]].unsqueeze(0)
+        # else:
+        h0 = torch.zeros((1, n, self.hidden_dim)).cuda()
+        hidden = torch.zeros(n, self.hidden_dim).cuda()
 
 
 
@@ -201,10 +201,10 @@ class MASGNN(torch.nn.Module):
             hidden = self.gnn_layers[i](hidden, edges, nodes.size(0))
             # print(hidden)
 
-            if self.mm:
-                h0 = mean_feature[nodes[:, 1]].unsqueeze(0).cuda().index_copy_(1, old_nodes_new_idx, h0[:,old_node])
-            else:
-                h0 = torch.zeros(1, nodes.size(0), hidden.size(1)).cuda().index_copy_(1, old_nodes_new_idx, h0[:, old_node])
+            # if self.mm:
+            #     h0 = mean_feature[nodes[:, 1]].unsqueeze(0).cuda().index_copy_(1, old_nodes_new_idx, h0[:,old_node])
+            # else:
+            h0 = torch.zeros(1, nodes.size(0), hidden.size(1)).cuda().index_copy_(1, old_nodes_new_idx, h0[:, old_node])
             hidden = self.dropout(hidden)
             hidden, h0 = self.gate(hidden.unsqueeze(0), h0)
             hidden = hidden.squeeze(0)

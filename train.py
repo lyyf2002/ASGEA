@@ -41,7 +41,7 @@ parser.add_argument("--time_dim", type=int, default=32)
 parser.add_argument("--out_dim", type=int, default=32)
 parser.add_argument("--train_support", type=int, default=0)
 parser.add_argument("--gnn_model", type=str, default='RS_GNN')
-parser.add_argument("--mm", type=int, default=0)
+parser.add_argument("--mm", type=int, default=1)
 parser.add_argument("--shuffle", type=int, default=1)
 parser.add_argument("--meta", type=int, default=1)
 parser.add_argument("--temperature", type=float, default=0.5)
@@ -186,7 +186,8 @@ if __name__ == '__main__':
         os.makedirs(results_dir)
     args_str = f'{args.data_choice}_{args.data_rate}_lr{args.lr}_bs{args.n_batch}_hidden_dim{args.hidden_dim}_lamb{args.lamb}_dropout{args.dropout}_act{args.act}_decay_rate{args.decay_rate}'
     args.perf_file = os.path.join(results_dir, args.exp_name, args_str + time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(time.time())) + '.txt')
-    
+    if not os.path.exists(os.path.join(results_dir, args.exp_name)):
+        os.makedirs(os.path.join(results_dir, args.exp_name),exist_ok=True)
     if args.nni:
         import nni
         from nni.utils import merge_parameter
