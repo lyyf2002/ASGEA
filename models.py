@@ -17,7 +17,7 @@ class Text_enc(nn.Module):
         a_v = self.W(Text)
         o = self.u(Text_rel)
         alpha = softmax(o, Textid, None, ent_num)
-        text = scatter(alpha * a_v, index=Textid, dim=0, dim_size=ent_num, reduce='mean')
+        text = scatter(alpha * a_v, index=Textid, dim=0, dim_size=ent_num, reduce='sum')
 
         return text
 

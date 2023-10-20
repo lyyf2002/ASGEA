@@ -12,6 +12,7 @@ import torch.nn.functional as F
 from transformers import BertTokenizer
 import torch.distributed
 from tqdm import tqdm
+import re
 
 from utils import get_topk_indices, get_adjr
 
@@ -372,20 +373,25 @@ def get_ent2id(fns):
                 th = line[:-1].split('\t')
                 ent2id[th[1]] = int(th[0])
     return ent2id
-
+def split_camel_case(input_string):
+    words = re.findall(r'[A-Z]?[a-z]+|[A-Z]+(?=[A-Z]|$)', input_string)
+    return words
 def db_str(s):
-    return s[1:-1].split('/')[-1].replace('_',' ')
+    return ' '.join(split_camel_case(s[1:-1].split('/')[-1].replace('_',' ')))
 def db_time(s):
+    s = s.split("^^")[0][1:-1]
     if 'e' in s:
         return s
-    s = s.split("^^")[0][1:-1]
+    
     if '-' not in s[1:]:
-        return float(s)
+        return s
     s = s.split('-')
     y = int(s[0].replace('#','0'))
     m = int(s[1]) if s[1]!='##'else 1
     d = int(s[2]) if s[2]!='##' and s[2]!='' else 1
-    return f'{y}-{m}-{d}'
+    return y + (m-1)/12 +(d-1)/30/12
+
+
 
 def load_attr_withNums(datas,fns, ent2id_dict):
     ans =  [load_attr_withNum(data,fn,ent2id_dict) for data,fn in zip(datas,fns)]
@@ -394,10 +400,11 @@ def load_attr_withNum(data, fn, ent2id):
 
     with open(fn, 'r',encoding='utf-8') as f:
         Numericals = f.readlines()
+    Numericals = list(set(Numericals))
 
     if data=='FB15K':
         Numericals = [i[:-1].split('\t') for i in Numericals]
-        Numericals = [(ent2id[i[0]], i[1][1:-1].replace('http://rdf.freebase.com/ns/', '').split('.')[-1], float(i[2])) for i in
+        Numericals = [(ent2id[i[0]], i[1][1:-1].replace('http://rdf.freebase.com/ns/', '').split('.')[-1].replace('_',' '), i[2]) for i in
                       Numericals]
     elif data=='DB15K':
         Numericals = [i[:-1].split(' ') if '\t' not in i else i[:-1].split('\t') for i in Numericals]
