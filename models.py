@@ -210,8 +210,8 @@ class MASGNN(torch.nn.Module):
             hidden = hidden.squeeze(0)
         # hidden -> (len(nodes), hidden_dim)
         if self.mm:
-            mm_hidden = torch.cat((hidden, features['IMG'][nodes[:, 1]] * features['IMG'][q_sub[nodes[:, 0]]],
-                   features['Text'][nodes[:, 1]] * features['Text'][q_sub[nodes[:, 0]]]), dim=-1)
+            mm_hidden = torch.cat((hidden, features['IMG'][nodes[:, 1]] - features['IMG'][q_sub[nodes[:, 0]]],
+                   features['Text'][nodes[:, 1]] - features['Text'][q_sub[nodes[:, 0]]]), dim=-1)
             scores = self.W_final(mm_hidden).squeeze(-1)
         else:
             scores = self.W_final(hidden).squeeze(-1)
