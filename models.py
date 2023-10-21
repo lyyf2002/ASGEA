@@ -145,10 +145,22 @@ class MASGNN(torch.nn.Module):
         for i in range(self.n_layer):
             self.gnn_layers.append(GNNLayer(self.hidden_dim, self.hidden_dim, self.attn_dim, self.n_rel, act=act))
         self.gnn_layers = nn.ModuleList(self.gnn_layers)
+        
+        self.Ignn_layers = []
+        for i in range(self.n_layer):
+            self.Ignn_layers.append(GNNLayer(self.hidden_dim, self.hidden_dim, self.attn_dim, self.n_rel, act=act))
+        self.Ignn_layers = nn.ModuleList(self.Ignn_layers)
+        
+        self.Tgnn_layers = []
+        for i in range(self.n_layer):
+            self.Tgnn_layers.append(GNNLayer(self.hidden_dim, self.hidden_dim, self.attn_dim, self.n_rel, act=act))
+        self.Tgnn_layers = nn.ModuleList(self.Tgnn_layers)
 
         self.dropout = nn.Dropout(params.dropout)
         self.W_final = nn.Linear(3 * self.hidden_dim if self.mm else self.hidden_dim, 1, bias=False)  # get score todo: try to use mlp
         self.gate = nn.GRU(self.hidden_dim, self.hidden_dim)
+        self.igate = nn.GRU(self.hidden_dim, self.hidden_dim)
+        self.tgate = nn.GRU(self.hidden_dim, self.hidden_dim)
         if self.mm:
             self.img_features = F.normalize(torch.FloatTensor(self.loader.images_list)).cuda()
             self.att_features = torch.FloatTensor(self.loader.att_features).cuda()
@@ -175,43 +187,46 @@ class MASGNN(torch.nn.Module):
         # else:
         h0 = torch.zeros((1, n, self.hidden_dim)).cuda()
         hidden = torch.zeros(n, self.hidden_dim).cuda()
+        
+        ih0 = features['IMG'][nodes[:, 1]].unsqueeze(0).cuda()
+        ihidden = features['IMG'][nodes[:, 1]].cuda()
+        
+        th0 = features['Text'][nodes[:, 1]].unsqueeze(0).cuda()
+        thidden = features['Text'][nodes[:, 1]].cuda()
 
-
-
-
-        scores_all = []
         for i in range(self.n_layer):
             nodes = nodess[i]
             edges = edgess[i]
             old_nodes_new_idx = old_nodes_new_idxs[i]
             old_node = old_nodes[i]
-            # if mode == 'train':
-            #     nodes, edges, old_nodes_new_idx = self.loader.get_neighbors(nodes.data.cpu().numpy(), mode=mode,n_hop=i)
-            # else:
-            #     nodes, edges, old_nodes_new_idx = self.loader.get_test_cache(batch_idx,i)
-            #     # np to tensor
-            #     nodes = torch.LongTensor(nodes).cuda()
-            #     edges = torch.LongTensor(edges).cuda()
-            #     old_nodes_new_idx = torch.LongTensor(old_nodes_new_idx).cuda()
-            # print(nodes)
-            # print(edges)
-            # print(old_nodes_new_idx)
-            # print(hidden)
-            # print(h0)
             hidden = self.gnn_layers[i](hidden, edges, nodes.size(0))
+            ihidden = self.Ignn_layers[i](ihidden, edges, nodes.size(0))
+            thidden = self.Tgnn_layers[i](thidden, edges, nodes.size(0))
+            
             # print(hidden)
 
             # if self.mm:
             #     h0 = mean_feature[nodes[:, 1]].unsqueeze(0).cuda().index_copy_(1, old_nodes_new_idx, h0[:,old_node])
             # else:
             h0 = torch.zeros(1, nodes.size(0), hidden.size(1)).cuda().index_copy_(1, old_nodes_new_idx, h0[:, old_node])
+            ih0 = features['IMG'][nodes[:, 1]].unsqueeze(0).index_copy_(1, old_nodes_new_idx, ih0[:,old_node])
+            th0 = features['Text'][nodes[:, 1]].unsqueeze(0).index_copy_(1, old_nodes_new_idx, th0[:,old_node])
+            
             hidden = self.dropout(hidden)
             hidden, h0 = self.gate(hidden.unsqueeze(0), h0)
             hidden = hidden.squeeze(0)
+            
+            ihidden = self.dropout(ihidden)
+            ihidden, ih0 = self.igate(ihidden.unsqueeze(0), ih0)
+            ihidden = ihidden.squeeze(0)
+            
+            thidden = self.dropout(thidden)
+            thidden, th0 = self.tgate(thidden.unsqueeze(0), th0)
+            thidden = thidden.squeeze(0)
+                    
         # hidden -> (len(nodes), hidden_dim)
         if self.mm:
-            mm_hidden = torch.cat((hidden, features['IMG'][nodes[:, 1]] - features['IMG'][q_sub[nodes[:, 0]]],
-                   features['Text'][nodes[:, 1]] - features['Text'][q_sub[nodes[:, 0]]]), dim=-1)
+            mm_hidden = torch.cat((hidden, ihidden, thidden), dim=-1)
             scores = self.W_final(mm_hidden).squeeze(-1)
         else:
             scores = self.W_final(hidden).squeeze(-1)
