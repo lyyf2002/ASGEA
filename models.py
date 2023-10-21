@@ -96,7 +96,7 @@ class GNNLayer(torch.nn.Module):
         self.act = act
 
         # +3 for self-loop, alignment and alignment-inverse
-        self.rela_embed = nn.Embedding(2 * n_rel + 3, in_dim)
+        self.rela_embed = nn.Embedding(2 * n_rel + 5, in_dim)
 
         self.Ws_attn = nn.Linear(in_dim, attn_dim, bias=False)
         self.Wr_attn = nn.Linear(in_dim, attn_dim, bias=False)
@@ -138,6 +138,7 @@ class MASGNN(torch.nn.Module):
         self.n_rel = loader.n_rel
         self.n_ent = loader.n_ent
         self.loader = loader
+        self.left_num = len(self.loader.left_ents)
         acts = {'relu': nn.ReLU(), 'tanh': torch.tanh, 'idd': lambda x: x}
         act = acts[params.act]
 
@@ -158,18 +159,29 @@ class MASGNN(torch.nn.Module):
 
 
     def forward(self, subs, mode='train',batch_idx=None):
+        if self.mm:
+            features, mean_feature = self.mmfeature(img_features=self.img_features, att_features=self.att_features,
+                                                    att_rel_features=self.att_rel_features, att_ids=self.att_ids)
+            sim = torch.cosine_similarity(features['IMG'][:self.left_num], features['IMG'][self.left_num:])
+            sim = sim + torch.cosine_similarity(features['Text'][:self.left_num], features['Text'][self.left_num:])
+            sim = sim / 2
+            # select sim > 0.9 index
+            sim = torch.nonzero(sim > 0.9).squeeze(1)
+            # add rels = (2 * n_rel + 3) and inverse rels = (2 * n_rel + 4)
+            sim = torch.cat([sim[:,0],torch.ones(sim.shape[0]).long() * (2 * self.n_rel + 3), sim[:,1] + self.left_num], 0)
+            rev_sim = torch.cat([sim[:,1] + self.left_num,torch.ones(sim.shape[0]).long() * (2 * self.n_rel + 4),sim[:,0]], 0)
+            sim = torch.cat([sim, rev_sim], 1)
+
 
         q_sub = torch.LongTensor(subs).cuda()
         n = q_sub.shape[0]
         nodes = torch.cat([torch.arange(n).unsqueeze(1).cuda(), q_sub.unsqueeze(1)], 1)
-        nodess, edgess, old_nodes_new_idxs,old_nodes = self.loader.get_subgraphs(q_sub, layer=self.n_layer,mode=mode)
+        nodess, edgess, old_nodes_new_idxs,old_nodes = self.loader.get_subgraphs(q_sub, layer=self.n_layer,mode=mode,sim=sim)
 
 
 
 
-        if self.mm:
-            features, mean_feature = self.mmfeature(img_features=self.img_features, att_features=self.att_features,
-                                                    att_rel_features=self.att_rel_features, att_ids=self.att_ids)
+
             # hidden = mean_feature[nodes[:, 1]]
         #     h0 = mean_feature[nodes[:, 1]].unsqueeze(0)
         # else:

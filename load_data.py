@@ -179,10 +179,10 @@ class DataLoader:
         return KG
 
 
-    def get_subgraphs(self, head_nodes, layer=3,mode='train'):
+    def get_subgraphs(self, head_nodes, layer=3,mode='train',sim=None):
         all_edges = []
         for index,head_node in enumerate(head_nodes):
-            all_edge = self.get_subgraph(head_node, index, layer, mode)
+            all_edge = self.get_subgraph(head_node, index, layer, mode,sim=sim)
             all_edges.append(all_edge)
         all_nodes = []
         layer_edges = []
@@ -211,7 +211,7 @@ class DataLoader:
 
         return all_nodes, layer_edges, old_nodes_new_idxs, old_nodes
     #
-    def get_subgraph(self, head_node, index, layer, mode, max_size=500):
+    def get_subgraph(self, head_node, index, layer, mode, max_size=500, sim=None):
         if mode == 'train':
         #     # set false to self.node2index[node]
         #     mask = torch.ones(len(self.train_triple), dtype=torch.bool).cuda()
@@ -222,9 +222,10 @@ class DataLoader:
         #     support = torch.cat((support, reverse_support), dim=0)
         #     KG = torch.cat((support,self.fact_data),dim=0)
             KG=self.KG
-            KG.long()
         else:
             KG = self.tKG
+        if sim is not None:
+            KG = torch.cat((KG, sim), dim=0)
         row, col = KG[:, 0], KG[:, 2]
         node_mask = row.new_empty(self.n_ent, dtype=torch.bool)
         # edge_mask = row.new_empty(row.size(0), dtype=torch.bool)
