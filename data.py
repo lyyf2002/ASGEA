@@ -400,7 +400,9 @@ def load_attr_withNum(data, fn, ent2id):
 
     with open(fn, 'r',encoding='utf-8') as f:
         Numericals = f.readlines()
-    Numericals = list(set(Numericals))
+    Numericals_ = list(set(Numericals))
+    Numericals_.sort(key = Numericals.index)
+    Numericals = Numericals_
 
     if data=='FB15K':
         Numericals = [i[:-1].split('\t') for i in Numericals]
