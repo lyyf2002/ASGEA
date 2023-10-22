@@ -9,12 +9,12 @@ class Text_enc(nn.Module):
         super().__init__()
         self.hidden_dim = params.text_dim
         self.u = nn.Linear(params.text_dim, 1)
-        self.W = nn.Linear(params.text_dim , params.text_dim)
+        self.W = nn.Linear(2*params.text_dim , params.text_dim)
 
     def forward(self, ent_num, Textid, Text, Text_rel):
         # print(edge_index.device)
 
-        a_v = self.W(Text)
+        a_v = self.W(torch.cat((Text_rel,Text),-1))
         o = self.u(Text_rel)
         alpha = softmax(o, Textid, None, ent_num)
         text = scatter(alpha * a_v, index=Textid, dim=0, dim_size=ent_num, reduce='sum')
@@ -153,6 +153,7 @@ class MASGNN(torch.nn.Module):
         if self.mm:
             self.img_features = F.normalize(torch.FloatTensor(self.loader.images_list)).cuda()
             self.att_features = torch.FloatTensor(self.loader.att_features).cuda()
+            self.att_val_features = torch.FloatTensor(self.loader.att_val_features).cuda()
             self.att_rel_features = torch.FloatTensor(self.loader.att_rel_features).cuda()
             self.att_ids = torch.LongTensor(self.loader.att_ids).cuda()
             self.mmfeature = MMFeature(self.n_ent, params)
@@ -160,10 +161,12 @@ class MASGNN(torch.nn.Module):
 
     def forward(self, subs, mode='train',batch_idx=None):
         if self.mm:
-            features, mean_feature = self.mmfeature(img_features=self.img_features, att_features=self.att_features,
+            features, mean_feature = self.mmfeature(img_features=self.img_features, att_features=self.att_val_features,
                                                     att_rel_features=self.att_rel_features, att_ids=self.att_ids)
-            sim = torch.cosine_similarity(features['IMG'][:self.left_num], features['IMG'][self.left_num:])
-            sim = sim + torch.cosine_similarity(features['Text'][:self.left_num], features['Text'][self.left_num:])
+            features['IMG'] = features['IMG'] / torch.norm(features['IMG'], dim=-1, keepdim=True)
+            features['Text'] = features['Text'] / torch.norm(features['Text'], dim=-1, keepdim=True)
+            sim = torch.mm(features['IMG'][:self.left_num], features['IMG'][self.left_num:].T)
+            sim = sim + torch.mm(features['Text'][:self.left_num], features['Text'][self.left_num:].T)
             sim = sim / 2
             # select sim > 0.9 index
             sim = torch.nonzero(sim > 0.9).squeeze(1)
