@@ -19,6 +19,7 @@ class DataLoader:
         self.rel_features = KGs['rel_features']
         self.att_features = KGs['att_features']
         self.att_features_text = np.array(KGs['att_features'])
+        self.att2rel ,self.rels = self.process_rels(self.att_features) 
         self.att_ids = [i[0] for i in self.att_features]
         self.test_cache_url = os.path.join(args.data_path, args.data_choice, args.data_split, f'test_{args.data_rate}')
         self.test_cache = {}
@@ -27,26 +28,35 @@ class DataLoader:
             if os.path.exists(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy')):
                 self.att_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), allow_pickle=True)
                 self.att_rel_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_rel_features.npy'), allow_pickle=True)
+                self.att_val_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_val_features.npy'), allow_pickle=True)
             else:
-                self.att_features, self.att_rel_features = self.bert_feature()
+                self.att_features, self.att_rel_features,self.att_val_features = self.bert_feature()
                 np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), self.att_features)
                 np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_rel_features.npy'), self.att_rel_features)
-        # for i1,i2 in train_ill:
-        #     f1 = self.att_features[np.array(self.att_ids)==i1]
-        #     f2 = self.att_features[np.array(self.att_ids)==i2]
-        #     print('-'*30)
-        #     print('1',self.att_features_text[np.array(self.att_ids)==i1])
-        #     print('2',self.att_features_text[np.array(self.att_ids)==i2])
+                np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_val_features.npy'), self.att_val_features)
+        for i1,i2 in train_ill:
+            f1 = self.att_features[np.array(self.att_ids)==i1]
+            f2 = self.att_features[np.array(self.att_ids)==i2]
+            print('-'*30)
+            print('1',self.att_features_text[np.array(self.att_ids)==i1])
+            print('2',self.att_features_text[np.array(self.att_ids)==i2])
 
-        #     for f1i in f1:
-        #         for f2i in f2:
-        #             print(f1i.dot(f2i) / (np.linalg.norm(f1i) * np.linalg.norm(f2i)))
-        #     f1 = self.att_rel_features[np.array(self.att_ids)==i1]
-        #     f2 = self.att_rel_features[np.array(self.att_ids)==i2]
-        #     print()
-        #     for f1i in f1:
-        #         for f2i in f2:
-        #             print(f1i.dot(f2i) / (np.linalg.norm(f1i) * np.linalg.norm(f2i)))
+            for f1i in f1:
+                for f2i in f2:
+                    print(f1i.dot(f2i))
+            f1 = self.att_rel_features[self.att2rel[np.array(self.att_ids)==i1]]
+            f2 = self.att_rel_features[self.att2rel[np.array(self.att_ids)==i2]]
+            print()
+            for f1i in f1:
+                for f2i in f2:
+                    print(f1i.dot(f2i))
+                    
+            f1 = self.att_val_features[np.array(self.att_ids)==i1]
+            f2 = self.att_val_features[np.array(self.att_ids)==i2]
+            print()
+            for f1i in f1:
+                for f2i in f2:
+                    print(f1i.dot(f2i))
 
         self.name_features = KGs['name_features']
         self.char_features = KGs['char_features']
@@ -103,6 +113,20 @@ class DataLoader:
         # else:
         #     self.test_env = lmdb.open(self.test_cache_url, map_size=200*1024 * 1024 * 1024, max_dbs=1)
         #     self.preprocess_test()
+    def process_rels(self, atts):
+        rels = []
+        rels2index = {}
+        cur = 0
+        att2rel = []
+        for i,att in enumerate(atts):
+            if att[1] not in rels2index:
+                rels2index[att[1]] = cur
+                rels.append(att[1])
+                cur += 1
+            att2rel.append(rels2index[att[1]])
+        return np.array(att2rel),rels
+            
+            
 
     def bert_feature(self, ):
         from sentence_transformers import SentenceTransformer
@@ -127,9 +151,9 @@ class DataLoader:
                 output = model.encode(sent)
             outputs.append(output)
         outputs = np.concatenate(outputs)
-        rels = [i[1] for i in self.att_features]
+        
         batch_size = 512
-        sent_batch = [rels[i:i + batch_size] for i in range(0, len(rels), batch_size)]
+        sent_batch = [self.rels[i:i + batch_size] for i in range(0, len(self.rels), batch_size)]
         rel_outputs = []
         for sent in sent_batch:
             # encoded_input = tokenizer(sent, return_tensors='pt', padding=True, truncation=True, max_length=512)
@@ -142,8 +166,24 @@ class DataLoader:
                 output = model.encode(sent)
             rel_outputs.append(output)
         rel_outputs = np.concatenate(rel_outputs)
+
+        vals = [str(i[2]) for i in self.att_features]
+        batch_size = 512
+        sent_batch = [vals[i:i + batch_size] for i in range(0, len(vals), batch_size)]
+        val_outputs = []
+        for sent in sent_batch:
+            # encoded_input = tokenizer(sent, return_tensors='pt', padding=True, truncation=True, max_length=512)
+            # #cuda
+            # encoded_input.data['input_ids'] = encoded_input.data['input_ids'].cuda()
+            # encoded_input.data['attention_mask'] = encoded_input.data['attention_mask'].cuda()
+            # encoded_input.data['token_type_ids'] = encoded_input.data['token_type_ids'].cuda()
+            with torch.no_grad():
+                # output = model(**encoded_input)
+                output = model.encode(sent)
+            val_outputs.append(output)
+        val_outputs = np.concatenate(val_outputs)
         del model
-        return outputs, rel_outputs
+        return outputs, rel_outputs, val_outputs
 
 
 
@@ -179,10 +219,10 @@ class DataLoader:
         return KG
 
 
-    def get_subgraphs(self, head_nodes, layer=3,mode='train'):
+    def get_subgraphs(self, head_nodes, layer=3,mode='train',sim=None):
         all_edges = []
         for index,head_node in enumerate(head_nodes):
-            all_edge = self.get_subgraph(head_node, index, layer, mode)
+            all_edge = self.get_subgraph(head_node, index, layer, mode,sim=sim)
             all_edges.append(all_edge)
         all_nodes = []
         layer_edges = []
@@ -211,7 +251,7 @@ class DataLoader:
 
         return all_nodes, layer_edges, old_nodes_new_idxs, old_nodes
     #
-    def get_subgraph(self, head_node, index, layer, mode, max_size=500):
+    def get_subgraph(self, head_node, index, layer, mode, max_size=500, sim=None):
         if mode == 'train':
         #     # set false to self.node2index[node]
         #     mask = torch.ones(len(self.train_triple), dtype=torch.bool).cuda()
@@ -222,9 +262,10 @@ class DataLoader:
         #     support = torch.cat((support, reverse_support), dim=0)
         #     KG = torch.cat((support,self.fact_data),dim=0)
             KG=self.KG
-            KG.long()
         else:
             KG = self.tKG
+        if sim is not None:
+            KG = torch.cat((KG, sim), dim=0)
         row, col = KG[:, 0], KG[:, 2]
         node_mask = row.new_empty(self.n_ent, dtype=torch.bool)
         # edge_mask = row.new_empty(row.size(0), dtype=torch.bool)
