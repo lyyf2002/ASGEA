@@ -13,7 +13,6 @@ class Text_enc(nn.Module):
 
     def forward(self, ent_num, Textid, Text, Text_rel):
         # print(edge_index.device)
-
         a_v = self.W(torch.cat((Text_rel,Text),-1))
         o = self.u(Text_rel)
         alpha = softmax(o, Textid, None, ent_num)
@@ -153,8 +152,11 @@ class MASGNN(torch.nn.Module):
             self.img_features = F.normalize(torch.FloatTensor(self.loader.images_list)).cuda()
             self.att_features = torch.FloatTensor(self.loader.att_features).cuda()
             self.att_val_features = torch.FloatTensor(self.loader.att_val_features).cuda()
-            self.att_rel_features = torch.FloatTensor(self.loader.att_rel_features).cuda()
+            self.att_rel_features = torch.nn.Embedding(self.loader.att_rel_features.shape[0], self.loader.att_rel_features.shape[1])
+            self.att_rel_features.weight.data = torch.FloatTensor(self.loader.att_rel_features).cuda()
+            #torch.FloatTensor(self.loader.att_rel_features).cuda()
             self.att_ids = torch.LongTensor(self.loader.att_ids).cuda()
+            self.att2rel = torch.LongTensor(self.loader.att2rel).cuda()
             self.mmfeature = MMFeature(self.n_ent, params)
 
 
@@ -170,7 +172,7 @@ class MASGNN(torch.nn.Module):
 
         if self.mm:
             features, mean_feature = self.mmfeature(img_features=self.img_features, att_features=self.att_val_features,
-                                                    att_rel_features=self.att_rel_features, att_ids=self.att_ids)
+                                                    att_rel_features=self.att_rel_features[self.att2rel], att_ids=self.att_ids)
             # hidden = mean_feature[nodes[:, 1]]
         #     h0 = mean_feature[nodes[:, 1]].unsqueeze(0)
         # else:
