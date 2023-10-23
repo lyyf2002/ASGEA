@@ -34,29 +34,29 @@ class DataLoader:
                 np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), self.att_features)
                 np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_rel_features.npy'), self.att_rel_features)
                 np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_val_features.npy'), self.att_val_features)
-        for i1,i2 in train_ill:
-            f1 = self.att_features[np.array(self.att_ids)==i1]
-            f2 = self.att_features[np.array(self.att_ids)==i2]
-            print('-'*30)
-            print('1',self.att_features_text[np.array(self.att_ids)==i1])
-            print('2',self.att_features_text[np.array(self.att_ids)==i2])
+        # for i1,i2 in train_ill:
+        #     f1 = self.att_features[np.array(self.att_ids)==i1]
+        #     f2 = self.att_features[np.array(self.att_ids)==i2]
+        #     print('-'*30)
+        #     print('1',self.att_features_text[np.array(self.att_ids)==i1])
+        #     print('2',self.att_features_text[np.array(self.att_ids)==i2])
 
-            for f1i in f1:
-                for f2i in f2:
-                    print(f1i.dot(f2i))
-            f1 = self.att_rel_features[self.att2rel[np.array(self.att_ids)==i1]]
-            f2 = self.att_rel_features[self.att2rel[np.array(self.att_ids)==i2]]
-            print()
-            for f1i in f1:
-                for f2i in f2:
-                    print(f1i.dot(f2i))
+        #     for f1i in f1:
+        #         for f2i in f2:
+        #             print(f1i.dot(f2i))
+        #     f1 = self.att_rel_features[self.att2rel[np.array(self.att_ids)==i1]]
+        #     f2 = self.att_rel_features[self.att2rel[np.array(self.att_ids)==i2]]
+        #     print()
+        #     for f1i in f1:
+        #         for f2i in f2:
+        #             print(f1i.dot(f2i))
                     
-            f1 = self.att_val_features[np.array(self.att_ids)==i1]
-            f2 = self.att_val_features[np.array(self.att_ids)==i2]
-            print()
-            for f1i in f1:
-                for f2i in f2:
-                    print(f1i.dot(f2i))
+        #     f1 = self.att_val_features[np.array(self.att_ids)==i1]
+        #     f2 = self.att_val_features[np.array(self.att_ids)==i2]
+        #     print()
+        #     for f1i in f1:
+        #         for f2i in f2:
+        #             print(f1i.dot(f2i))
 
         self.name_features = KGs['name_features']
         self.char_features = KGs['char_features']
