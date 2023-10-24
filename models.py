@@ -14,7 +14,7 @@ class Text_enc(nn.Module):
     def forward(self, ent_num, Textid, Text, Text_rel):
         # print(edge_index.device)
 
-        a_v = self.W(torch.cat((Text_rel,Text),-1))
+        a_v = torch.cat((Text_rel,Text),-1)
         o = self.u(Text_rel)
         alpha = softmax(o, Textid, None, ent_num)
         text = scatter(alpha * a_v, index=Textid, dim=0, dim_size=ent_num, reduce='sum')
@@ -22,41 +22,41 @@ class Text_enc(nn.Module):
         return text
 
 
-class FeatureMapping(nn.Module):
-    def __init__(self, params):
-        super().__init__()
-        self.params = params
-        self.in_dims = {'Stru': params.stru_dim, 'Text': params.text_dim, 'IMG': params.hidden_dim,
-                        'Temporal': params.time_dim, 'Numerical': params.time_dim}
-        self.out_dim = params.hidden_dim
-        modals = ['Stru', 'Text', 'IMG', 'Temporal', 'Numerical']
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        if self.device == 'cuda':
+# class FeatureMapping(nn.Module):
+#     def __init__(self, params):
+#         super().__init__()
+#         self.params = params
+#         self.in_dims = {'Stru': params.stru_dim, 'Text': params.text_dim, 'IMG': params.hidden_dim,
+#                         'Temporal': params.time_dim, 'Numerical': params.time_dim}
+#         self.out_dim = params.hidden_dim
+#         modals = ['Stru', 'Text', 'IMG', 'Temporal', 'Numerical']
+#         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+#         if self.device == 'cuda':
 
-            self.W_list = {
-                modal: MLP(in_channels=self.in_dims[modal], out_channels=self.out_dim,
-                           hidden_channels=params.MLP_hidden_dim, num_layers=params.MLP_num_layers,
-                           dropout=params.MLP_dropout, norm=None).cuda() for modal in modals
-            }
-        else:
-            self.W_list = {
-                modal: MLP(in_channels=self.in_dims[modal], out_channels=self.out_dim,
-                           hidden_channels=params.MLP_hidden_dim, num_layers=params.MLP_num_layers,
-                           dropout=params.MLP_dropout, norm=None) for modal in modals
-            }
-        self.W_list = nn.ModuleDict(self.W_list)
+#             self.W_list = {
+#                 modal: MLP(in_channels=self.in_dims[modal], out_channels=self.out_dim,
+#                            hidden_channels=params.MLP_hidden_dim, num_layers=params.MLP_num_layers,
+#                            dropout=params.MLP_dropout, norm=None).cuda() for modal in modals
+#             }
+#         else:
+#             self.W_list = {
+#                 modal: MLP(in_channels=self.in_dims[modal], out_channels=self.out_dim,
+#                            hidden_channels=params.MLP_hidden_dim, num_layers=params.MLP_num_layers,
+#                            dropout=params.MLP_dropout, norm=None) for modal in modals
+#             }
+#         self.W_list = nn.ModuleDict(self.W_list)
 
-    def forward(self, features):
-        new_features = {}
-        modals = ['Text']
+#     def forward(self, features):
+#         new_features = {}
+#         modals = ['Text']
 
-        for modal, feature in features.items():
-            if modal not in modals:
-                continue
-            # print(modal,feature.device)
-            new_features[modal] = self.W_list[modal](feature)
-        mean_feature = torch.mean(torch.stack(list(new_features.values())), dim=0)
-        return new_features, mean_feature
+#         for modal, feature in features.items():
+#             if modal not in modals:
+#                 continue
+#             # print(modal,feature.device)
+#             new_features[modal] = self.W_list[modal](feature)
+#         mean_feature = torch.mean(torch.stack(list(new_features.values())), dim=0)
+#         return new_features, mean_feature
 
 
 class MMFeature(nn.Module):
@@ -79,10 +79,12 @@ class MMFeature(nn.Module):
         self.W_list = nn.ModuleDict(self.W_list)
 
     def forward(self, img_features = None,att_features= None,att_rel_features= None, att_ids=None):
-        features = {'IMG': self.W_list['IMG'](img_features),
-                    'Text': self.W_list['Text'](self.text_model(self.n_ent, att_ids, att_features, att_rel_features))}
-
-        mean_feature = torch.mean(torch.stack(list(features.values())), dim=0)
+        # features = {'IMG': self.W_list['IMG'](img_features),
+        #             'Text': self.W_list['Text'](self.text_model(self.n_ent, att_ids, att_features, att_rel_features))}
+        features = {'IMG': img_features,
+                    'Text': self.text_model(self.n_ent, att_ids, att_features, att_rel_features)}
+        # mean_feature = torch.mean(torch.stack(list(features.values())), dim=0)
+        mean_feature = None
         return features, mean_feature
 
 
@@ -148,32 +150,36 @@ class MASGNN(torch.nn.Module):
         self.gnn_layers = nn.ModuleList(self.gnn_layers)
 
         self.dropout = nn.Dropout(params.dropout)
-        self.W_final = nn.Linear(3 * self.hidden_dim if self.mm else self.hidden_dim, 1, bias=False)  # get score todo: try to use mlp
+        self.W_final = nn.Linear(self.hidden_dim if self.mm else self.hidden_dim, 1, bias=False)  # get score todo: try to use mlp
         self.gate = nn.GRU(self.hidden_dim, self.hidden_dim)
         if self.mm:
             self.img_features = F.normalize(torch.FloatTensor(self.loader.images_list)).cuda()
             self.att_features = torch.FloatTensor(self.loader.att_features).cuda()
             self.att_val_features = torch.FloatTensor(self.loader.att_val_features).cuda()
-            self.att_rel_features = torch.FloatTensor(self.loader.att_rel_features).cuda()
+            self.att_rel_features = torch.nn.Embedding(self.loader.att_rel_features.shape[0], self.loader.att_rel_features.shape[1])
+            self.att_rel_features.weight.data = torch.FloatTensor(self.loader.att_rel_features).cuda()
             self.att_ids = torch.LongTensor(self.loader.att_ids).cuda()
+            self.att2rel = torch.LongTensor(self.loader.att2rel).cuda()
             self.mmfeature = MMFeature(self.n_ent, params)
 
 
     def forward(self, subs, mode='train',batch_idx=None):
         if self.mm:
             features, mean_feature = self.mmfeature(img_features=self.img_features, att_features=self.att_val_features,
-                                                    att_rel_features=self.att_rel_features, att_ids=self.att_ids)
-            features['IMG'] = features['IMG'] / torch.norm(features['IMG'], dim=-1, keepdim=True)
-            features['Text'] = features['Text'] / torch.norm(features['Text'], dim=-1, keepdim=True)
-            sim = torch.mm(features['IMG'][:self.left_num], features['IMG'][self.left_num:].T)
-            sim = sim + torch.mm(features['Text'][:self.left_num], features['Text'][self.left_num:].T)
-            sim = sim / 2
+                                                    att_rel_features=self.att_rel_features(self.att2rel), att_ids=self.att_ids)
+            features['Text'] = F.normalize(features['Text'])
+            # features['IMG'] = features['IMG'] / torch.norm(features['IMG'], dim=-1, keepdim=True)
+            # features['Text'] = features['Text'] / torch.norm(features['Text'], dim=-1, keepdim=True)
+            
+            sim_i = torch.mm(features['IMG'][:self.left_num], features['IMG'][self.left_num:].T)
+            sim_t = torch.mm(features['Text'][:self.left_num], features['Text'][self.left_num:].T)
+            sim_m = (sim_i+sim_t) / 2
             # select sim > 0.9 index
-            sim = torch.nonzero(sim > 0.9).squeeze(1)
+            sim = torch.nonzero(sim_m > 0.8).squeeze(1)
             # add rels = (2 * n_rel + 3) and inverse rels = (2 * n_rel + 4)
-            sim = torch.cat([sim[:,0],torch.ones(sim.shape[0]).long() * (2 * self.n_rel + 3), sim[:,1] + self.left_num], 0)
-            rev_sim = torch.cat([sim[:,1] + self.left_num,torch.ones(sim.shape[0]).long() * (2 * self.n_rel + 4),sim[:,0]], 0)
-            sim = torch.cat([sim, rev_sim], 1)
+            sim_ = torch.cat([sim[:,[0]],torch.ones(sim.shape[0],1).long().cuda() * (2 * self.n_rel + 3), sim[:,[1]] + self.left_num], -1)
+            rev_sim = torch.cat([sim[:,[1]] + self.left_num,torch.ones(sim.shape[0],1).long().cuda() * (2 * self.n_rel + 4),sim[:,[0]]], -1)
+            sim = torch.cat([sim_, rev_sim], 0)
 
 
         q_sub = torch.LongTensor(subs).cuda()
@@ -224,14 +230,22 @@ class MASGNN(torch.nn.Module):
             hidden, h0 = self.gate(hidden.unsqueeze(0), h0)
             hidden = hidden.squeeze(0)
         # hidden -> (len(nodes), hidden_dim)
-        if self.mm:
-            mm_hidden = torch.cat((hidden, features['IMG'][nodes[:, 1]] - features['IMG'][q_sub[nodes[:, 0]]],
-                   features['Text'][nodes[:, 1]] - features['Text'][q_sub[nodes[:, 0]]]), dim=-1)
-            scores = self.W_final(mm_hidden).squeeze(-1)
-        else:
-            scores = self.W_final(hidden).squeeze(-1)
+        # if self.mm:
+        #     mm_hidden = torch.cat((hidden, features['IMG'][nodes[:, 1]] - features['IMG'][q_sub[nodes[:, 0]]],
+        #            features['Text'][nodes[:, 1]] - features['Text'][q_sub[nodes[:, 0]]]), dim=-1)
+        #     scores = self.W_final(mm_hidden).squeeze(-1)
+        # else:
+        scores = self.W_final(hidden).squeeze(-1)
+        
         scores_all = torch.zeros((len(subs), self.loader.n_ent)).cuda()  # non_visited entities have 0 scores
         scores_all[[nodes[:, 0], nodes[:, 1]]] = scores
+        for i,sub in enumerate(subs):
+            if sub<self.left_num:
+                scores_all[i,self.left_num:] = scores_all[i,self.left_num:]+sim_m[sub,:]
+            else:
+                scores_all[i,:self.left_num] = scores_all[i,:self.left_num] + sim_m[:,sub-self.left_num]
+
+
         return scores_all
 
 
