@@ -173,23 +173,23 @@ class MASGNN(torch.nn.Module):
             
             sim_i = torch.mm(features['IMG'][:self.left_num], features['IMG'][self.left_num:].T)
             sim_t = torch.mm(features['Text'][:self.left_num], features['Text'][self.left_num:].T)
-            sim_m = (sim_i+sim_t) / 2
+            sim_m = sim_i+sim_t
             # select sim > 0.9 index
-            sim_row,sim_row_index = sim_m.topk(1,dim=1)
-            sim_col,col = sim_row.topk(500,dim=0)
-            row = sim_row_index[col] + self.left_num
-            row = row.squeeze(-1)
-            # add rels = (2 * n_rel + 3) and inverse rels = (2 * n_rel + 4)
-            sim_ = torch.cat([col,torch.ones(col.shape).long().cuda() * (2 * self.n_rel + 3), row], -1)
-            rev_sim = torch.cat([row,torch.ones(row.shape).long().cuda() * (2 * self.n_rel + 4),col], -1)
-            sim = torch.cat([sim_, rev_sim], 0)
-            print('sim',sim.shape)
+            # sim_row,sim_row_index = sim_m.topk(1,dim=1)
+            # sim_col,col = sim_row.topk(500,dim=0)
+            # row = sim_row_index[col] + self.left_num
+            # row = row.squeeze(-1)
+            # # add rels = (2 * n_rel + 3) and inverse rels = (2 * n_rel + 4)
+            # sim_ = torch.cat([col,torch.ones(col.shape).long().cuda() * (2 * self.n_rel + 3), row], -1)
+            # rev_sim = torch.cat([row,torch.ones(row.shape).long().cuda() * (2 * self.n_rel + 4),col], -1)
+            # sim = torch.cat([sim_, rev_sim], 0)
+            # print('sim',sim.shape)
 
 
         q_sub = torch.LongTensor(subs).cuda()
         n = q_sub.shape[0]
         nodes = torch.cat([torch.arange(n).unsqueeze(1).cuda(), q_sub.unsqueeze(1)], 1)
-        nodess, edgess, old_nodes_new_idxs,old_nodes = self.loader.get_subgraphs(q_sub, layer=self.n_layer,mode=mode,sim=sim)
+        nodess, edgess, old_nodes_new_idxs,old_nodes = self.loader.get_subgraphs(q_sub, layer=self.n_layer,mode=mode,sim=None)
 
 
 
@@ -240,6 +240,8 @@ class MASGNN(torch.nn.Module):
         #     scores = self.W_final(mm_hidden).squeeze(-1)
         # else:
         scores = self.W_final(hidden).squeeze(-1)
+        # map to -1,1
+        scores = torch.tanh(scores)
         
         scores_all = torch.zeros((len(subs), self.loader.n_ent)).cuda()  # non_visited entities have 0 scores
         scores_all[[nodes[:, 0], nodes[:, 1]]] = scores
