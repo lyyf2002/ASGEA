@@ -67,7 +67,7 @@ class MMFeature(nn.Module):
         self.n_ent = n_ent
         # self.feature_mapping = FeatureMapping(params)
         self.text_model = Text_enc(params)
-        self.in_dims = {'Stru': params.stru_dim, 'Text': params.text_dim, 'IMG': params.img_dim}
+        self.in_dims = {'Stru': params.stru_dim, 'Text': 2*params.text_dim, 'IMG': params.img_dim}
         self.out_dim = params.hidden_dim
         modals = ['Text', 'IMG']
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -79,10 +79,10 @@ class MMFeature(nn.Module):
         self.W_list = nn.ModuleDict(self.W_list)
 
     def forward(self, img_features = None,att_features= None,att_rel_features= None, att_ids=None):
-        # features = {'IMG': self.W_list['IMG'](img_features),
-        #             'Text': self.W_list['Text'](self.text_model(self.n_ent, att_ids, att_features, att_rel_features))}
-        features = {'IMG': img_features,
-                    'Text': self.text_model(self.n_ent, att_ids, att_features, att_rel_features)}
+        features = {'IMG': self.W_list['IMG'](img_features),
+                    'Text': self.W_list['Text'](self.text_model(self.n_ent, att_ids, att_features, att_rel_features))}
+        # features = {'IMG': img_features,
+        #             'Text': self.text_model(self.n_ent, att_ids, att_features, att_rel_features)}
         # mean_feature = torch.mean(torch.stack(list(features.values())), dim=0)
         mean_feature = None
         return features, mean_feature
@@ -175,11 +175,15 @@ class MASGNN(torch.nn.Module):
             sim_t = torch.mm(features['Text'][:self.left_num], features['Text'][self.left_num:].T)
             sim_m = (sim_i+sim_t) / 2
             # select sim > 0.9 index
-            sim = torch.nonzero(sim_m > 0.8).squeeze(1)
+            sim_row,sim_row_index = sim_m.topk(1,dim=1)
+            sim_col,col = sim_row.topk(500,dim=0)
+            row = sim_row_index[col] + self.left_num
+            row = row.squeeze(-1)
             # add rels = (2 * n_rel + 3) and inverse rels = (2 * n_rel + 4)
-            sim_ = torch.cat([sim[:,[0]],torch.ones(sim.shape[0],1).long().cuda() * (2 * self.n_rel + 3), sim[:,[1]] + self.left_num], -1)
-            rev_sim = torch.cat([sim[:,[1]] + self.left_num,torch.ones(sim.shape[0],1).long().cuda() * (2 * self.n_rel + 4),sim[:,[0]]], -1)
+            sim_ = torch.cat([col,torch.ones(col.shape).long().cuda() * (2 * self.n_rel + 3), row], -1)
+            rev_sim = torch.cat([row,torch.ones(row.shape).long().cuda() * (2 * self.n_rel + 4),col], -1)
             sim = torch.cat([sim_, rev_sim], 0)
+            print('sim',sim.shape)
 
 
         q_sub = torch.LongTensor(subs).cuda()
