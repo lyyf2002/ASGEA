@@ -8,7 +8,7 @@ from collections import defaultdict
 from data import load_eva_data
 import pickle
 from tqdm import tqdm
-import lmdb
+# import lmdb
 class DataLoader:
     def __init__(self, args):
 

@@ -173,19 +173,19 @@ class MASGNN(torch.nn.Module):
             
             sim_i = torch.mm(features['IMG'][:self.left_num], features['IMG'][self.left_num:].T)
             sim_t = torch.mm(features['Text'][:self.left_num], features['Text'][self.left_num:].T)
-            sim_m = (sim_i+sim_t) / 2
+            sim_m = sim_i+sim_t
             # select sim > 0.9 index
-            sim = torch.nonzero(sim_m > 0.8).squeeze(1)
-            # add rels = (2 * n_rel + 3) and inverse rels = (2 * n_rel + 4)
-            sim_ = torch.cat([sim[:,[0]],torch.ones(sim.shape[0],1).long().cuda() * (2 * self.n_rel + 3), sim[:,[1]] + self.left_num], -1)
-            rev_sim = torch.cat([sim[:,[1]] + self.left_num,torch.ones(sim.shape[0],1).long().cuda() * (2 * self.n_rel + 4),sim[:,[0]]], -1)
-            sim = torch.cat([sim_, rev_sim], 0)
+            # sim = torch.nonzero(sim_m > 0.8).squeeze(1)
+            # # add rels = (2 * n_rel + 3) and inverse rels = (2 * n_rel + 4)
+            # sim_ = torch.cat([sim[:,[0]],torch.ones(sim.shape[0],1).long().cuda() * (2 * self.n_rel + 3), sim[:,[1]] + self.left_num], -1)
+            # rev_sim = torch.cat([sim[:,[1]] + self.left_num,torch.ones(sim.shape[0],1).long().cuda() * (2 * self.n_rel + 4),sim[:,[0]]], -1)
+            # sim = torch.cat([sim_, rev_sim], 0)
 
 
         q_sub = torch.LongTensor(subs).cuda()
         n = q_sub.shape[0]
         nodes = torch.cat([torch.arange(n).unsqueeze(1).cuda(), q_sub.unsqueeze(1)], 1)
-        nodess, edgess, old_nodes_new_idxs,old_nodes = self.loader.get_subgraphs(q_sub, layer=self.n_layer,mode=mode,sim=sim)
+        nodess, edgess, old_nodes_new_idxs,old_nodes = self.loader.get_subgraphs(q_sub, layer=self.n_layer,mode=mode,sim=None)
 
 
 
