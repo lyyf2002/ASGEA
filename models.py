@@ -165,9 +165,21 @@ class MASGNN(torch.nn.Module):
 
     def forward(self, subs, mode='train',batch_idx=None):
         if self.mm:
-            features, mean_feature = self.mmfeature(img_features=self.img_features, att_features=self.att_val_features,
-                                                    att_rel_features=self.att_rel_features(self.att2rel), att_ids=self.att_ids)
-            features['Text'] = F.normalize(features['Text'])
+            # features, mean_feature = self.mmfeature(img_features=self.img_features, att_features=self.att_val_features,
+            #                                         att_rel_features=self.att_rel_features(self.att2rel), att_ids=self.att_ids)
+            # simlarity of att_rel_features use cosine shape (n_rel, n_rel)
+            rel_sim = torch.mm(self.att_rel_features.weight, self.att_rel_features.weight.T)
+            # use self.att2rel to get simlarity from rel_sim , self.att2rel shape is n_att , attention shape is (n_att, n_att)
+            attention = rel_sim[torch.meshgrid(self.att2rel[:self.num_att_left], self.att2rel[self.num_att_left:])]
+            attention_l2r = scatter(attention, index=self.att_ids[:self.num_att_left], dim=0, dim_size=self.n_ent-self.left_num, reduce='sum')
+            attention_r2l = scatter(attention, index=self.att_ids[self.num_att_left:], dim=1, dim_size=self.left_num, reduce='sum')
+            alpha_l2r = softmax(attention_l2r, self.att_ids[self.num_att_left:], None, self.left_num)
+            alpha_r2l = softmax(attention_r2l, self.att_ids[:self.num_att_left], None, self.n_ent-self.left_num)
+            # get att_features (n1,n2,dim)
+            
+
+
+
             # features['IMG'] = features['IMG'] / torch.norm(features['IMG'], dim=-1, keepdim=True)
             # features['Text'] = features['Text'] / torch.norm(features['Text'], dim=-1, keepdim=True)
             

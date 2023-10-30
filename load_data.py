@@ -18,6 +18,8 @@ class DataLoader:
         self.images_list = KGs['images_list']
         self.rel_features = KGs['rel_features']
         self.att_features = KGs['att_features']
+        self.num_att_left = KGs['num_att_left']
+        self.num_att_right = KGs['num_att_right']
         self.att_features_text = np.array(KGs['att_features'])
         self.att2rel ,self.rels = self.process_rels(self.att_features) 
         self.att_ids = [i[0] for i in self.att_features]

@@ -126,7 +126,7 @@ def load_eva_data(args):
     if 'FB' in args.data_choice:
         a1 = os.path.join(file_dir, 'FB15K_NumericalTriples.txt')
         a2 = os.path.join(file_dir, 'DB15K_NumericalTriples.txt') if 'DB' in args.data_choice else os.path.join(file_dir, 'YAGO15K_NumericalTriples.txt')
-        att_features = load_attr_withNums(['FB15K','DB15K'] if 'DB' in args.data_choice else ['FB15K','YAGO15K'],[a1, a2], ent2id_dict)
+        att_features, num_att_left, num_att_right = load_attr_withNums(['FB15K','DB15K'] if 'DB' in args.data_choice else ['FB15K','YAGO15K'],[a1, a2], ent2id_dict)
     else:
         a1 = os.path.join(file_dir, 'training_attrs_1')
         a2 = os.path.join(file_dir, 'training_attrs_2')
@@ -153,6 +153,8 @@ def load_eva_data(args):
         'images_list': img_features,
         'rel_features': rel_features,
         'att_features': att_features,
+        'num_att_left': num_att_left,
+        'num_att_right': num_att_right,
         'name_features': name_features,
         'char_features': char_features,
         'input_idx': input_idx,
@@ -395,7 +397,7 @@ def db_time(s):
 
 def load_attr_withNums(datas,fns, ent2id_dict):
     ans =  [load_attr_withNum(data,fn,ent2id_dict) for data,fn in zip(datas,fns)]
-    return ans[0]+ans[1]
+    return ans[0]+ans[1], len(ans[0]), len(ans[1])
 def load_attr_withNum(data, fn, ent2id):
 
     with open(fn, 'r',encoding='utf-8') as f:
