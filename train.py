@@ -14,7 +14,7 @@ parser.add_argument("--data_choice", default="FBYG15K", type=str, choices=["DBP1
                     help="Experiment path")
 parser.add_argument("--data_rate", type=float, default=0.8, choices=[0.2, 0.3, 0.5, 0.8], help="training set rate")
 parser.add_argument('--seed', type=str, default=1234)
-parser.add_argument('--gpu', type=int, default=0)
+parser.add_argument('--gpu', type=int, default=1)
 parser.add_argument('--perf_file', type=str, default='perf.txt')
 parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--lamb', type=float, default=0.0002)
@@ -175,6 +175,8 @@ parser.add_argument("--local_rank", default=-1, type=int)
 parser.add_argument("--nni", default=0, type=int)
 args = parser.parse_args()
 os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+# use gpu 0
+torch.cuda.set_device(args.gpu)
 
 
 if __name__ == '__main__':

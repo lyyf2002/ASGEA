@@ -155,6 +155,8 @@ class MASGNN(torch.nn.Module):
         if self.mm:
             self.img_features = F.normalize(torch.FloatTensor(self.loader.images_list)).cuda()
             self.att_features = torch.FloatTensor(self.loader.att_features).cuda()
+            self.num_att_left = self.loader.num_att_left
+            self.num_att_right = self.loader.num_att_right
             self.att_val_features = torch.FloatTensor(self.loader.att_val_features).cuda()
             self.att_rel_features = torch.nn.Embedding(self.loader.att_rel_features.shape[0], self.loader.att_rel_features.shape[1])
             self.att_rel_features.weight.data = torch.FloatTensor(self.loader.att_rel_features).cuda()
@@ -171,10 +173,10 @@ class MASGNN(torch.nn.Module):
             rel_sim = torch.mm(self.att_rel_features.weight, self.att_rel_features.weight.T)
             # use self.att2rel to get simlarity from rel_sim , self.att2rel shape is n_att , attention shape is (n_att, n_att)
             attention = rel_sim[torch.meshgrid(self.att2rel[:self.num_att_left], self.att2rel[self.num_att_left:])]
-            attention_l2r = scatter(attention, index=self.att_ids[:self.num_att_left], dim=0, dim_size=self.n_ent-self.left_num, reduce='sum')
-            attention_r2l = scatter(attention, index=self.att_ids[self.num_att_left:], dim=1, dim_size=self.left_num, reduce='sum')
-            alpha_l2r = softmax(attention_l2r, self.att_ids[self.num_att_left:], None, self.left_num)
-            alpha_r2l = softmax(attention_r2l, self.att_ids[:self.num_att_left], None, self.n_ent-self.left_num)
+            attention_l2r = scatter(attention, index=self.att_ids[self.num_att_left:]-self.left_num, dim=1, dim_size=self.n_ent-self.left_num, reduce='sum')
+            attention_r2l = scatter(attention, index=self.att_ids[:self.num_att_left], dim=0, dim_size=self.left_num, reduce='sum')
+            alpha_l2r = softmax(attention_l2r, self.att_ids[:self.num_att_left], None, self.left_num,0)
+            alpha_r2l = softmax(attention_r2l, self.att_ids[self.num_att_left:]-self.left_num, None, self.n_ent-self.left_num,-1)
             # get att_features (n1,n2,dim)
             
 
