@@ -161,6 +161,8 @@ class MASGNN(torch.nn.Module):
             self.att_rel_features = torch.nn.Embedding(self.loader.att_rel_features.shape[0], self.loader.att_rel_features.shape[1])
             self.att_rel_features.weight.data = torch.FloatTensor(self.loader.att_rel_features).cuda()
             self.att_ids = torch.LongTensor(self.loader.att_ids).cuda()
+            self.ids_att = self.loader.ids_att
+            self.ids_att = {k:torch.LongTensor(v).cuda() for k,v in self.loader.ids_att.items()}
             self.att2rel = torch.LongTensor(self.loader.att2rel).cuda()
             self.mmfeature = MMFeature(self.n_ent, params)
 
@@ -172,12 +174,13 @@ class MASGNN(torch.nn.Module):
             # simlarity of att_rel_features use cosine shape (n_rel, n_rel)
             rel_sim = torch.mm(self.att_rel_features.weight, self.att_rel_features.weight.T)
             # use self.att2rel to get simlarity from rel_sim , self.att2rel shape is n_att , attention shape is (n_att, n_att)
-            attention = rel_sim[torch.meshgrid(self.att2rel[:self.num_att_left], self.att2rel[self.num_att_left:])]
-            attention_l2r = scatter(attention, index=self.att_ids[self.num_att_left:]-self.left_num, dim=1, dim_size=self.n_ent-self.left_num, reduce='sum')
-            attention_r2l = scatter(attention, index=self.att_ids[:self.num_att_left], dim=0, dim_size=self.left_num, reduce='sum')
-            alpha_l2r = softmax(attention_l2r, self.att_ids[:self.num_att_left], None, self.left_num,0)
-            alpha_r2l = softmax(attention_r2l, self.att_ids[self.num_att_left:]-self.left_num, None, self.n_ent-self.left_num,-1)
+            # attention = rel_sim[torch.meshgrid(self.att2rel[:self.num_att_left], self.att2rel[self.num_att_left:])]
+            # attention_l2r = scatter(attention, index=self.att_ids[self.num_att_left:]-self.left_num, dim=1, dim_size=self.n_ent-self.left_num, reduce='sum')
+            # attention_r2l = scatter(attention, index=self.att_ids[:self.num_att_left], dim=0, dim_size=self.left_num, reduce='sum')
+            # alpha_l2r = softmax(attention_l2r, self.att_ids[:self.num_att_left], None, self.left_num,0)
+            # alpha_r2l = softmax(attention_r2l, self.att_ids[self.num_att_left:]-self.left_num, None, self.n_ent-self.left_num,-1)
             # get att_features (n1,n2,dim)
+
             
 
 
@@ -185,9 +188,9 @@ class MASGNN(torch.nn.Module):
             # features['IMG'] = features['IMG'] / torch.norm(features['IMG'], dim=-1, keepdim=True)
             # features['Text'] = features['Text'] / torch.norm(features['Text'], dim=-1, keepdim=True)
             
-            sim_i = torch.mm(features['IMG'][:self.left_num], features['IMG'][self.left_num:].T)
-            sim_t = torch.mm(features['Text'][:self.left_num], features['Text'][self.left_num:].T)
-            sim_m = sim_i+sim_t
+            # sim_i = torch.mm(features['IMG'][:self.left_num], features['IMG'][self.left_num:].T)
+            # sim_t = torch.mm(features['Text'][:self.left_num], features['Text'][self.left_num:].T)
+            # sim_m = sim_i+sim_t
             # select sim > 0.9 index
             # sim = torch.nonzero(sim_m > 0.8).squeeze(1)
             # # add rels = (2 * n_rel + 3) and inverse rels = (2 * n_rel + 4)
@@ -254,10 +257,38 @@ class MASGNN(torch.nn.Module):
         scores_all = torch.zeros((len(subs), self.loader.n_ent)).cuda()  # non_visited entities have 0 scores
         scores_all[[nodes[:, 0], nodes[:, 1]]] = scores
         for i,sub in enumerate(subs):
+            if sub not in self.ids_att:
+                continue
             if sub<self.left_num:
-                scores_all[i,self.left_num:] = scores_all[i,self.left_num:]+sim_m[sub,:]
+                attention = rel_sim[torch.meshgrid(self.att2rel[self.ids_att[sub]], self.att2rel[self.num_att_left:])]
+                attention_l2r = scatter(attention, index=self.att_ids[self.num_att_left:]-self.left_num, dim=1, dim_size=self.n_ent-self.left_num, reduce='sum')
+                attention_r2l = scatter(attention, index=torch.zeros(self.ids_att[sub].shape).long().cuda(), dim=0, dim_size=1, reduce='sum')
+                alpha_l2r = softmax(attention_l2r, torch.zeros(self.ids_att[sub].shape).long().cuda(), None, 1,0)
+                alpha_r2l = softmax(attention_r2l, self.att_ids[self.num_att_left:]-self.left_num, None, self.n_ent-self.left_num,-1)
+                left_att_feat = torch.cat((self.att_rel_features(self.att2rel[self.ids_att[sub]]),self.att_val_features[self.ids_att[sub]]),-1)
+                left_att_feat = left_att_feat.unsqueeze(1)#(left_att_sub , 1 , dim)
+                left_att_feat = left_att_feat.repeat(1,self.n_ent-self.left_num,1)#(left_att_sub , right_ent , dim)
+                left_feat = scatter(alpha_l2r.unsqueeze(-1) * left_att_feat, index=torch.zeros(self.ids_att[sub].shape).long().cuda(), dim=0, dim_size=1, reduce='sum')#(1 , right_ent , dim)
+                right_att_feat = torch.cat((self.att_rel_features(self.att2rel[self.num_att_left:]),self.att_val_features[self.num_att_left:]),-1)#(right_att_all,dim)
+                right_att_feat = right_att_feat.unsqueeze(0)#(1,right_att_all,dim)
+                right_feat = scatter(alpha_r2l.unsqueeze(-1) * right_att_feat,index=self.att_ids[self.num_att_left:]-self.left_num,dim=1,dim_size=self.n_ent-self.left_num,reduce='sum')#(1,right_ent,dim)
+                
+                scores_all[i,self.left_num:] = scores_all[i,self.left_num:]+torch.cosine_similarity(left_feat.squeeze(0), right_feat.squeeze(0), dim=1)
             else:
-                scores_all[i,:self.left_num] = scores_all[i,:self.left_num] + sim_m[:,sub-self.left_num]
+                attention = rel_sim[torch.meshgrid(self.att2rel[:self.num_att_left], self.att2rel[self.ids_att[sub]])]
+                attention_l2r = scatter(attention, index=torch.zeros(self.ids_att[sub].shape).long().cuda(), dim=1, dim_size=1, reduce='sum')
+                attention_r2l = scatter(attention, index=self.att_ids[:self.num_att_left], dim=0, dim_size=self.left_num, reduce='sum')
+                alpha_l2r = softmax(attention_l2r, self.att_ids[:self.num_att_left], None, self.left_num,0) #(left_att_all,1)
+                alpha_r2l = softmax(attention_r2l, torch.zeros(self.ids_att[sub].shape).long().cuda(), None, 1,-1)#(left_ent,right_att_sub)
+                left_att_feat = torch.cat((self.att_rel_features(self.att2rel[:self.num_att_left]),self.att_val_features[:self.num_att_left]),-1)#(left_att_all,dim)
+                left_att_feat = left_att_feat.unsqueeze(1)#(left_att_all,1,dim)
+                left_feat = scatter(alpha_l2r.unsqueeze(-1) * left_att_feat, index=self.att_ids[:self.num_att_left], dim=0, dim_size=self.left_num, reduce='sum')#(left_ent,1,dim)
+                right_att_feat = torch.cat((self.att_rel_features(self.att2rel[self.ids_att[sub]]),self.att_val_features[self.ids_att[sub]]),-1)#(right_att_sub , dim)
+                right_att_feat = right_att_feat.unsqueeze(0)#(1,right_att_sub , dim)
+                right_att_feat = right_att_feat.repeat(self.left_num,1,1)#(left_ent,right_att_sub , dim)
+                right_feat = scatter(alpha_r2l.unsqueeze(-1) * right_att_feat,index=torch.zeros(self.ids_att[sub].shape).long().cuda(),dim=1,dim_size=1,reduce='sum')#(left_ent,1,dim)
+                
+                scores_all[i,:self.left_num] = scores_all[i,:self.left_num] + torch.cosine_similarity(left_feat.squeeze(1), right_feat.squeeze(1), dim=1)
 
 
         return scores_all

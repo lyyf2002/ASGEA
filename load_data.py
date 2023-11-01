@@ -23,6 +23,11 @@ class DataLoader:
         self.att_features_text = np.array(KGs['att_features'])
         self.att2rel ,self.rels = self.process_rels(self.att_features) 
         self.att_ids = [i[0] for i in self.att_features]
+        self.ids_att = {}
+        for att_index,ids in enumerate(self.att_ids):
+            if ids not in self.ids_att:
+                self.ids_att[ids] = []
+            self.ids_att[ids].append(att_index)
         self.test_cache_url = os.path.join(args.data_path, args.data_choice, args.data_split, f'test_{args.data_rate}')
         self.test_cache = {}
 
