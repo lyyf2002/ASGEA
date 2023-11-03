@@ -1,6 +1,6 @@
 import os
 import argparse
-
+import random
 import torch
 import numpy as np
 from load_data import DataLoader
@@ -180,6 +180,7 @@ torch.cuda.set_device(args.gpu)
 
 
 if __name__ == '__main__':
+    random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 

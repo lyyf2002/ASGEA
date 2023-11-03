@@ -167,7 +167,7 @@ class MASGNN(torch.nn.Module):
             self.mmfeature = MMFeature(self.n_ent, params)
             self.textMLP = MLP(in_channels=2*params.text_dim, out_channels=self.hidden_dim,
                        hidden_channels=params.MLP_hidden_dim, num_layers=params.MLP_num_layers,
-                       dropout=params.MLP_dropout)
+                       dropout=[params.MLP_dropout]*params.MLP_num_layers, norm=None)
 
 
     def forward(self, subs, mode='train',batch_idx=None):
@@ -286,8 +286,8 @@ class MASGNN(torch.nn.Module):
                 alpha_l2r = softmax(attention_l2r, self.att_ids[:self.num_att_left], None, self.left_num,0) #(left_att_all,1)
                 alpha_r2l = softmax(attention_r2l, torch.zeros(self.ids_att[sub].shape).long().cuda(), None, 1,-1)#(left_ent,right_att_sub)
                 left_att_feat = torch.cat((self.att_rel_features(self.att2rel[:self.num_att_left]),self.att_val_features[:self.num_att_left]),-1)#(left_att_all,dim)
-                left_att_feat = left_att_feat.unsqueeze(1)#(left_att_all,1,dim)
                 left_att_feat = self.textMLP(left_att_feat)
+                left_att_feat = left_att_feat.unsqueeze(1)#(left_att_all,1,dim)
                 left_feat = scatter(alpha_l2r.unsqueeze(-1) * left_att_feat, index=self.att_ids[:self.num_att_left], dim=0, dim_size=self.left_num, reduce='sum')#(left_ent,1,dim)
                 right_att_feat = torch.cat((self.att_rel_features(self.att2rel[self.ids_att[sub]]),self.att_val_features[self.ids_att[sub]]),-1)#(right_att_sub , dim)
                 right_att_feat = self.textMLP(right_att_feat)
