@@ -168,6 +168,9 @@ class MASGNN(torch.nn.Module):
             self.textMLP = MLP(in_channels=2*params.text_dim, out_channels=self.hidden_dim,
                        hidden_channels=params.MLP_hidden_dim, num_layers=params.MLP_num_layers,
                        dropout=[params.MLP_dropout]*params.MLP_num_layers, norm=None)
+            self.ImgMLP = MLP(in_channels=params.img_dim, out_channels=300,
+                        hidden_channels=600, num_layers=params.MLP_num_layers,
+                       dropout=[params.MLP_dropout]*params.MLP_num_layers, norm=None)
 
 
     def forward(self, subs, mode='train',batch_idx=None):
@@ -190,8 +193,9 @@ class MASGNN(torch.nn.Module):
 
             # features['IMG'] = features['IMG'] / torch.norm(features['IMG'], dim=-1, keepdim=True)
             # features['Text'] = features['Text'] / torch.norm(features['Text'], dim=-1, keepdim=True)
-            
-            sim_i = torch.mm(self.img_features[:self.left_num], self.img_features[self.left_num:].T)
+            img_features = self.ImgMLP(self.img_features)
+            img_features = F.normalize(img_features)
+            sim_i = torch.mm(img_features[:self.left_num], img_features[self.left_num:].T)
             # sim_t = torch.mm(features['Text'][:self.left_num], features['Text'][self.left_num:].T)
             # sim_m = sim_i+sim_t
             # select sim > 0.9 index
