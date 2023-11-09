@@ -168,8 +168,8 @@ class MASGNN(torch.nn.Module):
             self.textMLP = MLP(in_channels=2*params.text_dim, out_channels=self.hidden_dim,
                        hidden_channels=params.MLP_hidden_dim, num_layers=params.MLP_num_layers,
                        dropout=[params.MLP_dropout]*params.MLP_num_layers, norm=None)
-            self.ImgMLP = MLP(in_channels=params.img_dim, out_channels=300,
-                        hidden_channels=600, num_layers=params.MLP_num_layers,
+            self.ImgMLP = MLP(in_channels=params.img_dim, out_channels=self.hidden_dim,
+                        hidden_channels=params.MLP_hidden_dim, num_layers=params.MLP_num_layers,
                        dropout=[params.MLP_dropout]*params.MLP_num_layers, norm=None)
 
 
