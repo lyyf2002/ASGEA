@@ -20,16 +20,33 @@ class DataLoader:
         self.att_features = KGs['att_features']
         self.num_att_left = KGs['num_att_left']
         self.num_att_right = KGs['num_att_right']
-        self.att_features_text = np.array(KGs['att_features'])
+        self.left_ents = left_ents
+        self.right_ents = right_ents
+        old_ids = np.array(self.left_ents+self.right_ents)
+        # new_ids = torch.arange(len(self.left_ents+self.right_ents))
+        # old2new = torch.zeros(len(self.left_ents+self.right_ents)).long()
+        # old2new[old_ids] = new_ids
+        # self.old2new = old2new
+        self.old_ids = old_ids
+        self.images_list = self.images_list[self.old_ids]
+        self.old2new_dict = {oldid:newid for newid,oldid in enumerate(self.left_ents+self.right_ents)}
+        triples = KGs['triples']
+        triples = [(self.old2new_dict[tri[0]],tri[1],self.old2new_dict[tri[2]]) for tri in triples]
+        train_ill = np.array([(self.old2new_dict[tri[0]],self.old2new_dict[tri[1]]) for tri in train_ill])
+        test_ill = np.array([(self.old2new_dict[tri[0]],self.old2new_dict[tri[1]]) for tri in test_ill])
+        
+        
+        # self.att_features_text = np.array(KGs['att_features'])
         self.att2rel ,self.rels = self.process_rels(self.att_features) 
-        self.att_ids = [i[0] for i in self.att_features]
+        self.att_ids = [self.old2new_dict[i[0]] for i in self.att_features]
+        
         self.ids_att = {}
         for att_index,ids in enumerate(self.att_ids):
             if ids not in self.ids_att:
                 self.ids_att[ids] = []
             self.ids_att[ids].append(att_index)
-        self.test_cache_url = os.path.join(args.data_path, args.data_choice, args.data_split, f'test_{args.data_rate}')
-        self.test_cache = {}
+        # self.test_cache_url = os.path.join(args.data_path, args.data_choice, args.data_split, f'test_{args.data_rate}')
+        # self.test_cache = {}
 
         if args.mm:
             if os.path.exists(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy')):
@@ -67,10 +84,8 @@ class DataLoader:
 
         self.name_features = KGs['name_features']
         self.char_features = KGs['char_features']
-        triples = KGs['triples']
+        
 
-        self.left_ents = left_ents
-        self.right_ents = right_ents
 
         self.n_ent = ent_num
         self.n_rel = rel_num
@@ -140,11 +155,12 @@ class DataLoader:
         from transformers import BertTokenizer, BertModel
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         # model = BertModel.from_pretrained("bert-base-uncased").cuda()
-        model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2').cuda()
+        # model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2').cuda()
+        model = SentenceTransformer('sentence-transformers/LaBSE').cuda()
 
         outputs = []
         texts = [a + ' ' + str(v) for i,a,v in self.att_features]
-        batch_size = 512
+        batch_size = 2048
         sent_batch = [texts[i:i + batch_size] for i in range(0, len(texts), batch_size)]
         for sent in sent_batch:
 
@@ -159,7 +175,7 @@ class DataLoader:
             outputs.append(output)
         outputs = np.concatenate(outputs)
         
-        batch_size = 512
+        # batch_size = 512
         sent_batch = [self.rels[i:i + batch_size] for i in range(0, len(self.rels), batch_size)]
         rel_outputs = []
         for sent in sent_batch:
@@ -175,7 +191,7 @@ class DataLoader:
         rel_outputs = np.concatenate(rel_outputs)
 
         vals = [str(i[2]) for i in self.att_features]
-        batch_size = 512
+        # batch_size = 512
         sent_batch = [vals[i:i + batch_size] for i in range(0, len(vals), batch_size)]
         val_outputs = []
         for sent in sent_batch:

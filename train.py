@@ -1,4 +1,5 @@
 import os
+os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 import argparse
 import random
 import torch
@@ -10,10 +11,12 @@ from collections import OrderedDict
 
 parser = argparse.ArgumentParser(description="Parser for MASEA")
 parser.add_argument("--data_path", default="../data/mmkg", type=str, help="Experiment path")
-parser.add_argument("--data_choice", default="FBYG15K", type=str, choices=["DBP15K", "DWY", "FBYG15K", "FBDB15K"],
+parser.add_argument("--data_choice", default="DBP15K", type=str, choices=["DBP15K", "DWY", "FBYG15K", "FBDB15K"],
                     help="Experiment path")
-parser.add_argument("--data_rate", type=float, default=0.2, choices=[0.2, 0.3, 0.5, 0.8], help="training set rate")
-parser.add_argument('--seed', type=str, default=1234)
+parser.add_argument("--data_split", default="zh_en", type=str, help="Experiment split",
+                    choices=["dbp_wd_15k_V2", "dbp_wd_15k_V1", "zh_en", "ja_en", "fr_en", "norm"])
+parser.add_argument("--data_rate", type=float, default=0.3, choices=[0.2, 0.3, 0.5, 0.8], help="training set rate")
+parser.add_argument('--seed', type=str, default=42)
 parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--perf_file', type=str, default='perf.txt')
 parser.add_argument('--lr', type=float, default=0.001)
@@ -27,16 +30,16 @@ parser.add_argument('--n_layer', type=int, default=5)
 parser.add_argument('--n_batch', type=int, default=2)
 parser.add_argument("--lamda", type=float, default=0.5)
 parser.add_argument("--exp_name", default="EA_exp", type=str, help="Experiment name")
-parser.add_argument("--MLP_hidden_dim", type=int, default=256)
-parser.add_argument("--MLP_num_layers", type=int, default=2)
+parser.add_argument("--MLP_hidden_dim", type=int, default=64)
+parser.add_argument("--MLP_num_layers", type=int, default=3)
 parser.add_argument("--MLP_dropout", type=float, default=0.2)
 
 parser.add_argument("--n_ent", type=int, default=0)
 parser.add_argument("--n_rel", type=int, default=0)
 
 parser.add_argument("--stru_dim", type=int, default=16)
-parser.add_argument("--text_dim", type=int, default=384)
-parser.add_argument("--img_dim", type=int, default=4096)
+parser.add_argument("--text_dim", type=int, default=768)
+parser.add_argument("--img_dim", type=int, default=2048)
 parser.add_argument("--time_dim", type=int, default=32)
 parser.add_argument("--out_dim", type=int, default=32)
 parser.add_argument("--train_support", type=int, default=0)
@@ -94,8 +97,7 @@ parser.add_argument("--contrastive_loss", default=0, type=int, choices=[0, 1])
 parser.add_argument('--clip', type=float, default=1., help='gradient clipping')
 
 # --------- EVA -----------
-parser.add_argument("--data_split", default="norm", type=str, help="Experiment split",
-                    choices=["dbp_wd_15k_V2", "dbp_wd_15k_V1", "zh_en", "ja_en", "fr_en", "norm"])
+
 parser.add_argument("--hidden_units", type=str, default="128,128,128",
                     help="hidden units in each hidden layer(including in_dim and out_dim), splitted with comma")
 parser.add_argument("--attn_dropout", type=float, default=0.0, help="dropout rate for gat layers")
@@ -175,6 +177,7 @@ parser.add_argument("--local_rank", default=-1, type=int)
 parser.add_argument("--nni", default=0, type=int)
 args = parser.parse_args()
 os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+
 # use gpu 0
 torch.cuda.set_device(args.gpu)
 
@@ -187,7 +190,7 @@ if __name__ == '__main__':
     results_dir = 'results'
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
-    args_str = f'{args.data_choice}_{args.data_rate}_lr{args.lr}_bs{args.n_batch}_hidden_dim{args.hidden_dim}_lamb{args.lamb}_dropout{args.dropout}_act{args.act}_decay_rate{args.decay_rate}'
+    args_str = f'{args.data_choice}_{args.data_split}_{args.data_rate}_lr{args.lr}_bs{args.n_batch}_hidden_dim{args.hidden_dim}_lamb{args.lamb}_dropout{args.dropout}_act{args.act}_decay_rate{args.decay_rate}'
     args.perf_file = os.path.join(results_dir, args.exp_name, args_str + time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(time.time())) + '.txt')
     if not os.path.exists(os.path.join(results_dir, args.exp_name)):
         os.makedirs(os.path.join(results_dir, args.exp_name),exist_ok=True)

@@ -128,9 +128,10 @@ def load_eva_data(args):
         a2 = os.path.join(file_dir, 'DB15K_NumericalTriples.txt') if 'DB' in args.data_choice else os.path.join(file_dir, 'YAGO15K_NumericalTriples.txt')
         att_features, num_att_left, num_att_right = load_attr_withNums(['FB15K','DB15K'] if 'DB' in args.data_choice else ['FB15K','YAGO15K'],[a1, a2], ent2id_dict)
     else:
-        a1 = os.path.join(file_dir, 'training_attrs_1')
-        a2 = os.path.join(file_dir, 'training_attrs_2')
-        att_features = load_attr([a1, a2], ENT_NUM, ent2id_dict, 1000)  # attr
+        att1,att2 = args.data_split.split('_')
+        a1 = os.path.join(file_dir, f'{att1}_att_triples')
+        a2 = os.path.join(file_dir, f'{att2}_att_triples')
+        att_features, num_att_left, num_att_right = load_attr_withNums([att1,att2],[a1, a2], ent2id_dict)
     print(f"attribute feature shape:{len(att_features)}")
     print("-----dataset summary-----")
     print(f"dataset:\t\t {file_dir}")
@@ -392,6 +393,34 @@ def db_time(s):
     m = int(s[1]) if s[1]!='##'else 1
     d = int(s[2]) if s[2]!='##' and s[2]!='' else 1
     return y + (m-1)/12 +(d-1)/30/12
+def dbp_str(s):
+    t = s[1:-1].split('/')[-1].replace('_',' ')
+    t_ = ' '.join(split_camel_case(t))
+    if t_ == '':
+        return t
+    return t_
+    
+
+def dbp_value(s):
+    if '^^' in s:
+        s = s.split("^^")[0][1:-1]
+    elif '@' in s:
+        s = s.split('@')[0][1:-1]
+    else:
+        return s[1:-1]
+    if 'e' in s:
+        return s
+    
+    if '-' not in s[1:]:
+        return s
+    try:
+        s_ = s.split('-')
+        y = int(s_[0].replace('#','0'))
+        m = int(s_[1]) if s_[1]!='##'else 1
+        d = int(s_[2]) if s_[2]!='##' and s_[2]!='' else 1
+        return y + (m-1)/12 +(d-1)/30/12
+    except:
+        return s
 
 
 
@@ -402,9 +431,10 @@ def load_attr_withNum(data, fn, ent2id):
 
     with open(fn, 'r',encoding='utf-8') as f:
         Numericals = f.readlines()
-    Numericals_ = list(set(Numericals))
-    Numericals_.sort(key = Numericals.index)
-    Numericals = Numericals_
+    if data == 'FB15K' or data == 'DB15K' or data=='YAGO15K':
+        Numericals_ = list(set(Numericals))
+        Numericals_.sort(key = Numericals.index)
+        Numericals = Numericals_
 
     if data=='FB15K':
         Numericals = [i[:-1].split('\t') for i in Numericals]
@@ -417,6 +447,10 @@ def load_attr_withNum(data, fn, ent2id):
     elif data=='YAGO15K':
         Numericals = [i[:-1].split(' ') if '\t' not in i else i[:-1].split('\t') for i in Numericals]
         Numericals = [(ent2id[i[0]], db_str(i[1]), db_time(i[2])) for i in Numericals]
+    
+    else:
+        Numericals = [i[:-1].split(' ') if '\t' not in i else i[:-1].split('\t') for i in Numericals]
+        Numericals = [(ent2id[i[0][1:-1]], dbp_str(i[1]), dbp_value(' '.join(i[2:-1]))) for i in Numericals]
         
     return Numericals
 
