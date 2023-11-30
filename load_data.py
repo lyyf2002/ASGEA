@@ -20,16 +20,16 @@ class DataLoader:
         self.att_features = KGs['att_features']
         self.num_att_left = KGs['num_att_left']
         self.num_att_right = KGs['num_att_right']
-        self.left_ents = left_ents
-        self.right_ents = right_ents
-        old_ids = np.array(self.left_ents+self.right_ents)
+        self.left_ents = [i for i in range(len(left_ents))]
+        self.right_ents = [len(left_ents) + i for i in range(len(right_ents))]
+        old_ids = np.array(left_ents+right_ents)
         # new_ids = torch.arange(len(self.left_ents+self.right_ents))
         # old2new = torch.zeros(len(self.left_ents+self.right_ents)).long()
         # old2new[old_ids] = new_ids
         # self.old2new = old2new
         self.old_ids = old_ids
         self.images_list = self.images_list[self.old_ids]
-        self.old2new_dict = {oldid:newid for newid,oldid in enumerate(self.left_ents+self.right_ents)}
+        self.old2new_dict = {oldid:newid for newid,oldid in enumerate(left_ents+right_ents)}
         triples = KGs['triples']
         triples = [(self.old2new_dict[tri[0]],tri[1],self.old2new_dict[tri[2]]) for tri in triples]
         train_ill = np.array([(self.old2new_dict[tri[0]],self.old2new_dict[tri[1]]) for tri in train_ill])
@@ -325,6 +325,48 @@ class DataLoader:
             layer_edges[i] = torch.unique(layer_edges[i], dim=0)
             batched_edges.append(torch.cat([torch.ones(len(layer_edges[i])).unsqueeze(1).cuda() * index, layer_edges[i]], 1))
         return batched_edges
+    
+    def get_vis_subgraph(self, head_node, tail_node, layer, max_size=500, sim=None):
+        
+        KG = self.tKG
+        if sim is not None:
+            KG = torch.cat((KG, sim), dim=0)
+        row, col = KG[:, 0], KG[:, 2]
+        node_mask = row.new_empty(self.n_ent, dtype=torch.bool)
+        # edge_mask = row.new_empty(row.size(0), dtype=torch.bool)
+        subsets = [torch.LongTensor([head_node]).cuda()]
+        raw_layer_edges = []
+        for i in range(layer):
+            node_mask.fill_(False)
+            node_mask[subsets[-1]] = True
+            edge_mask = torch.index_select(node_mask, 0, row)
+            subsets.append(torch.unique(col[edge_mask]))
+            raw_layer_edges.append(edge_mask)
+            # nodes, edges, old_nodes_new_idx = self.get_neighbors(nodes.data.cpu().numpy())
+        # delete target not in the other KG
+        # tail_node = self.left_ents if head_node.item() >= len(self.left_ents) else self.right_ents
+        tail_node = torch.LongTensor([tail_node]).cuda()
+        node_mask_ = row.new_empty(self.n_ent, dtype=torch.bool)
+        node_mask_.fill_(False)
+        node_mask_[tail_node] = True
+        tail_set = subsets[-1]
+        node_mask.fill_(False)
+        node_mask[tail_set] = True
+        node_mask = node_mask & node_mask_
+        layer_edges = []
+        for i in reversed(range(layer)):
+            edge_mask = torch.index_select(node_mask, 0, col)
+            edge_mask = edge_mask & raw_layer_edges[i]
+            node_mask_.fill_(False)
+            node_mask_[row[edge_mask]] = True
+            node_mask = node_mask | node_mask_
+            layer_edges.append(KG[edge_mask])
+        layer_edges = layer_edges[::-1]
+        batched_edges = []
+        for i in range(layer):
+            layer_edges[i] = torch.unique(layer_edges[i], dim=0)
+            batched_edges.append(layer_edges[i])
+        return torch.cat(batched_edges, dim=0)
 
     # def get_neighbors(self, nodes, mode='train', n_hop=0):
     #     if mode == 'train':

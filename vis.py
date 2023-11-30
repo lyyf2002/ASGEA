@@ -202,41 +202,22 @@ if __name__ == '__main__':
     print(args)
     print(args, file=open(args.perf_file, 'a'))
     loader = DataLoader(args)
-    model = BaseModel(args, loader)
+    
+    batch_size = 1
+    n_data = loader.n_test
+    n_batch = n_data // batch_size + (n_data % batch_size > 0)
 
-    best_h1 = 0
-    best_h3 = 0
-    best_h5 = 0
-    best_h10 = 0
+    for i in range(n_batch):
+        start = i*batch_size
+        end = min(n_data, (i+1)*batch_size)
+        batch_idx = np.arange(start, end)
+        triple = loader.get_batch(batch_idx, data='test')
+        subs, rels, objs = triple[:,0],triple[:,1],triple[:,2]
+        sub = subs[0]
+        rel = rels[0]   
+        obj = objs[0]
+        edges = loader.get_vis_subgraph(sub, obj, 5)
 
-    best_str = ''
-    wait_patient = 10
-    epoch = 0
 
-    best_mrr = 0
 
-    while wait_patient > 0:
-        epoch += 1
-        mrr,t_h1, t_h3, t_h5, t_h10, out_str = model.train_batch()
-        if args.nni:
-            nni.report_intermediate_result({'default':mrr,'h1':t_h1,'h3':t_h3,'h5':t_h5,'h10':t_h10})
-        with open(args.perf_file, 'a+') as f:
-            f.write(out_str)
-        if mrr > best_mrr:
-            best_mrr = mrr
-            best_h1 = t_h1
-            best_h3 = t_h3
-            best_h5 = t_h5
-            best_h10 = t_h10
-            best_str = out_str
-            print(str(epoch) + '\t' + best_str)
-            with open(args.perf_file,'a+') as f:
-                f.write("best at "+ str(epoch) + '\t' + best_str)
-            wait_patient = 10
-        else:
-            wait_patient -= 1
-
-    if args.nni:
-        nni.report_final_result({'default':best_mrr,'h1':best_h1,'h3':best_h3,'h5':best_h5,'h10':best_h10})
-    print(best_str)
 
