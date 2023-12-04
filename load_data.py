@@ -20,6 +20,8 @@ class DataLoader:
         self.att_features = KGs['att_features']
         self.num_att_left = KGs['num_att_left']
         self.num_att_right = KGs['num_att_right']
+        self.id2name = KGs['id2name']
+        self.id2rel = KGs['id2rel']
         self.left_ents = [i for i in range(len(left_ents))]
         self.right_ents = [len(left_ents) + i for i in range(len(right_ents))]
         old_ids = np.array(left_ents+right_ents)
@@ -366,7 +368,7 @@ class DataLoader:
         for i in range(layer):
             layer_edges[i] = torch.unique(layer_edges[i], dim=0)
             batched_edges.append(layer_edges[i])
-        return torch.cat(batched_edges, dim=0)
+        return batched_edges
 
     # def get_neighbors(self, nodes, mode='train', n_hop=0):
     #     if mode == 'train':

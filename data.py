@@ -55,8 +55,10 @@ def load_eva_data(args):
     ent2id_dict, ills, triples, r_hs, r_ts, ids = read_raw_data(file_dir, lang_list)
     e1 = os.path.join(file_dir, 'ent_ids_1')
     e2 = os.path.join(file_dir, 'ent_ids_2')
-    left_ents = get_ids(e1)
-    right_ents = get_ids(e2)
+    left_ents,left_id2name = get_ids(e1,file_dir)
+    right_ents,right_id2name = get_ids(e2,file_dir)
+    id2name = {**left_id2name, **right_id2name}
+    id2rel = get_id2rel(os.path.join(file_dir, 'id2relation.txt'))
     ENT_NUM = len(ent2id_dict)
     REL_NUM = len(r_hs)
     np.random.shuffle(ills)
@@ -159,7 +161,9 @@ def load_eva_data(args):
         'name_features': name_features,
         'char_features': char_features,
         'input_idx': input_idx,
-        'triples': triples
+        'triples': triples,
+        'id2name':id2name,
+        'id2rel':id2rel
     }, {"left": left_non_train, "right": right_non_train},left_ents,right_ents, train_ill, test_ill, eval_ill, test_ill_
 
 
@@ -359,14 +363,39 @@ def loadfile(fn, num=1):
     return ret
 
 
-def get_ids(fn):
+def get_ids(fn,file_dir):
     ids = []
+    id2name = {}
+    fbid2name = {}
+    if 'FB' in fn:
+        with open(os.path.join(file_dir, 'fbid2name.txt'), encoding='utf-8') as f:
+            for line in f:
+                th = line[:-1].split('\t')
+                fbid2name[th[0]] = th[1]
     with open(fn, encoding='utf-8') as f:
         for line in f:
             th = line[:-1].split('\t')
             ids.append(int(th[0]))
-    return ids
+            name = th[1]
+            if '<http://yago-knowledge.org/resource/' in name:
+                name = name[1:-1].split('/')[-1]
+            if 'FB' in fn:
+                if name in fbid2name:
+                    name = fbid2name[name]
+            id2name[int(th[0])] = name
 
+    return ids, id2name
+
+def get_id2rel(fn):
+    id2rel = {}
+    with open(fn, encoding='utf-8') as f:
+        for line in f:
+            th = line[:-1].split('\t')
+            rel = th[1]
+            if '/' in rel:
+                rel = rel.split('/')[-1]
+            id2rel[int(th[0])] = rel
+    return id2rel
 
 def get_ent2id(fns):
     ent2id = {}
