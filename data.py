@@ -128,12 +128,12 @@ def load_eva_data(args):
     if 'FB' in args.data_choice:
         a1 = os.path.join(file_dir, 'FB15K_NumericalTriples.txt')
         a2 = os.path.join(file_dir, 'DB15K_NumericalTriples.txt') if 'DB' in args.data_choice else os.path.join(file_dir, 'YAGO15K_NumericalTriples.txt')
-        att_features, num_att_left, num_att_right = load_attr_withNums(['FB15K','DB15K'] if 'DB' in args.data_choice else ['FB15K','YAGO15K'],[a1, a2], ent2id_dict)
+        att_features, num_att_left, num_att_right = load_attr_withNums(['FB15K','DB15K'] if 'DB' in args.data_choice else ['FB15K','YAGO15K'],[a1, a2], ent2id_dict, file_dir, topk=0)
     else:
         att1,att2 = args.data_split.split('_')
         a1 = os.path.join(file_dir, f'{att1}_att_triples')
         a2 = os.path.join(file_dir, f'{att2}_att_triples')
-        att_features, num_att_left, num_att_right = load_attr_withNums([att1,att2],[a1, a2], ent2id_dict)
+        att_features, num_att_left, num_att_right = load_attr_withNums([att1,att2],[a1, a2], ent2id_dict, file_dir, topk=args.topk)
     print(f"attribute feature shape:{len(att_features)}")
     print("-----dataset summary-----")
     print(f"dataset:\t\t {file_dir}")
@@ -453,8 +453,67 @@ def dbp_value(s):
 
 
 
-def load_attr_withNums(datas,fns, ent2id_dict):
+def load_attr_withNums(datas,fns, ent2id_dict, file_dir, topk=0):
     ans =  [load_attr_withNum(data,fn,ent2id_dict) for data,fn in zip(datas,fns)]
+    if topk!=0:
+        num_att_left = len(ans[0])
+        att_rel_features = np.load(os.path.join(file_dir, 'att_rel_features.npy'), allow_pickle=True)
+        rels = torch.FloatTensor(att_rel_features).cuda()
+        sim_rels_left = torch.mm(rels[:num_att_left], rels[num_att_left:].T)
+        sim_rels_right = torch.mm(rels[num_att_left:], rels[:num_att_left].T)
+        # get the max sim at row
+        sim_rels_left = torch.max(sim_rels_left, dim=1)[0]
+        sim_rels_right = torch.max(sim_rels_right, dim=1)[0]
+        # get the topk rels
+        topk_rels_left = torch.topk(sim_rels_left, topk, dim=0)[1]
+        topk_rels_right = torch.topk(sim_rels_right, topk, dim=0)[1]
+        
+        topk_rels_left = topk_rels_left.cpu().numpy()
+        topk_rels_right = topk_rels_right.cpu().numpy()
+        # topk_rels = np.concatenate([topk_rels_left,topk_rels_right+num_att_left])
+        
+        rels = []
+        rels2index = {}
+        cur = 0
+        att2rel = []
+        for i,att in enumerate(ans[0]):
+            if att[1] not in rels2index:
+                rels2index[att[1]] = cur
+                rels.append(att[1])
+                cur += 1
+            att2rel.append(rels2index[att[1]])
+        att2rel = np.array(att2rel)
+        # contain topkrels
+        common_elements = np.in1d(att2rel, topk_rels_left)
+        common_elements_indices = np.where(common_elements)
+        ans_ = []
+        for i in common_elements_indices:
+            ans_.append(ans[0][i])
+        num_left = len(ans_)
+        
+        rels = []
+        rels2index = {}
+        cur = 0
+        att2rel = []
+        for i,att in enumerate(ans[1]):
+            if att[1] not in rels2index:
+                rels2index[att[1]] = cur
+                rels.append(att[1])
+                cur += 1
+            att2rel.append(rels2index[att[1]])
+        att2rel = np.array(att2rel)
+        # contain topkrels
+        common_elements = np.in1d(att2rel, topk_rels_right)
+        common_elements_indices = np.where(common_elements)
+        for i in common_elements_indices:
+            ans_.append(ans[1][i])
+        num_right = len(ans_) - num_left
+        return ans_,num_left,num_right
+            
+        
+        
+        
+        
     return ans[0]+ans[1], len(ans[0]), len(ans[1])
 def load_attr_withNum(data, fn, ent2id):
 

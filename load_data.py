@@ -51,15 +51,26 @@ class DataLoader:
         # self.test_cache = {}
 
         if args.mm:
-            if os.path.exists(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy')):
-                self.att_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), allow_pickle=True)
-                self.att_rel_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_rel_features.npy'), allow_pickle=True)
-                self.att_val_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_val_features.npy'), allow_pickle=True)
+            if args.topk == 0:
+                if os.path.exists(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy')):
+                    self.att_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), allow_pickle=True)
+                    self.att_rel_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_rel_features.npy'), allow_pickle=True)
+                    self.att_val_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_val_features.npy'), allow_pickle=True)
+                else:
+                    self.att_features, self.att_rel_features,self.att_val_features = self.bert_feature()
+                    np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), self.att_features)
+                    np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_rel_features.npy'), self.att_rel_features)
+                    np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_val_features.npy'), self.att_val_features)
             else:
-                self.att_features, self.att_rel_features,self.att_val_features = self.bert_feature()
-                np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_features.npy'), self.att_features)
-                np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_rel_features.npy'), self.att_rel_features)
-                np.save(os.path.join(args.data_path, args.data_choice, args.data_split, 'att_val_features.npy'), self.att_val_features)
+                if os.path.exists(os.path.join(args.data_path, args.data_choice, args.data_split, f'att_features{args.topk}.npy')):
+                    self.att_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, f'att_features{args.topk}.npy'), allow_pickle=True)
+                    self.att_rel_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, f'att_rel_features{args.topk}.npy'), allow_pickle=True)
+                    self.att_val_features = np.load(os.path.join(args.data_path, args.data_choice, args.data_split, f'att_val_features{args.topk}.npy'), allow_pickle=True)
+                else:
+                    self.att_features, self.att_rel_features,self.att_val_features = self.bert_feature()
+                    np.save(os.path.join(args.data_path, args.data_choice, args.data_split, f'att_features{args.topk}.npy'), self.att_features)
+                    np.save(os.path.join(args.data_path, args.data_choice, args.data_split, f'att_rel_features{args.topk}.npy'), self.att_rel_features)
+                    np.save(os.path.join(args.data_path, args.data_choice, args.data_split, f'att_val_features{args.topk}.npy'), self.att_val_features)
         # for i1,i2 in train_ill:
         #     f1 = self.att_features[np.array(self.att_ids)==i1]
         #     f2 = self.att_features[np.array(self.att_ids)==i2]

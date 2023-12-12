@@ -36,7 +36,7 @@ parser.add_argument("--MLP_dropout", type=float, default=0.2)
 
 parser.add_argument("--n_ent", type=int, default=0)
 parser.add_argument("--n_rel", type=int, default=0)
-
+parser.add_argument("--topk", type=int,default=1000)
 parser.add_argument("--stru_dim", type=int, default=16)
 parser.add_argument("--text_dim", type=int, default=768)
 parser.add_argument("--img_dim", type=int, default=2048)
@@ -199,6 +199,8 @@ if __name__ == '__main__':
         from nni.utils import merge_parameter
         nni_params = nni.get_next_parameter()
         args = merge_parameter(args, nni_params)
+    if 'FB' in args.data_choice:
+        args.topk = 0
     print(args)
     print(args, file=open(args.perf_file, 'a'))
     loader = DataLoader(args)
