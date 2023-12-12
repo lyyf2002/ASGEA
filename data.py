@@ -382,6 +382,8 @@ def get_ids(fn,file_dir):
             if 'FB' in fn:
                 if name in fbid2name:
                     name = fbid2name[name]
+            if '<http://dbpedia.org/resource/' in name:
+                name = name[1:-1].split('/')[-1].replace('_', ' ')
             id2name[int(th[0])] = name
 
     return ids, id2name

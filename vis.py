@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser(description="Parser for MASEA")
 parser.add_argument("--data_path", default="../data/mmkg", type=str, help="Experiment path")
-parser.add_argument("--data_choice", default="FBYG15K", type=str, choices=["DBP15K", "DWY", "FBYG15K", "FBDB15K"],
+parser.add_argument("--data_choice", default="FBDB15K", type=str, choices=["DBP15K", "DWY", "FBYG15K", "FBDB15K"],
                     help="Experiment path")
 parser.add_argument("--data_split", default="norm", type=str, help="Experiment split",
                     choices=["dbp_wd_15k_V2", "dbp_wd_15k_V1", "zh_en", "ja_en", "fr_en", "norm"])
@@ -266,8 +266,8 @@ if __name__ == '__main__':
 
         # draw graph with labels
         plt.figure(figsize=(16, 16), dpi=80)
-        pos = nx.kamada_kawai_layout(G)
-        # pos = nx.spring_layout(G)
+        # pos = nx.kamada_kawai_layout(G)
+        pos = nx.spring_layout(G)
         nx.draw(G, pos)
         nx.draw_networkx_nodes(G, pos=pos, nodelist=[str(sub.item()) + '_' + str(0),str(obj.item()) + '_' + str(5)], node_color='red', node_size=1000)
         node_labels = nx.get_node_attributes(G, 'desc')
@@ -275,9 +275,9 @@ if __name__ == '__main__':
         edge_labels = nx.get_edge_attributes(G, 'name')
         nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
 
-        plt.savefig(f'layer_{sub}_{rel}_{obj}.png', dpi=100)
+        plt.savefig(f'FBDB_{sub}_{rel}_{obj}.png', dpi=100)
         plt.close()
-        json.dump(g, open(f'{sub}_{rel}_{obj}.json', 'w',encoding='utf-8'), indent=4)
+        json.dump(g, open(f'FBDB_{sub}_{rel}_{obj}.json', 'w',encoding='utf-8'), indent=4)
 
 
 
