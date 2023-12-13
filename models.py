@@ -102,12 +102,12 @@ class GNNLayer(torch.nn.Module):
 
         self.Ws_attn = nn.Linear(in_dim, attn_dim, bias=False)
         self.Wr_attn = nn.Linear(in_dim, attn_dim, bias=False)
-        self.Wqr_attn = nn.Linear(in_dim, attn_dim)
+        self.Wkg_attn = nn.Linear(2*in_dim, attn_dim)
         self.w_alpha = nn.Linear(attn_dim, 1)
 
         self.W_h = nn.Linear(in_dim, out_dim, bias=False)
 
-    def forward(self, hidden, edges, n_node):
+    def forward(self, hidden, edges, n_node, kgemb, left_num):
         # edges:  [batch_idx, head, rela, tail, old_idx, new_idx]
         sub = edges[:, 4]
         rel = edges[:, 2]
@@ -116,11 +116,15 @@ class GNNLayer(torch.nn.Module):
         hs = hidden[sub]
         hr = self.rela_embed(rel)
 
-        # r_idx = edges[:, 0]
-        # h_qr = self.rela_embed(q_rel)[r_idx]
+        head = edges[:, 1]
+        tail = edges[:, 3]
+
+        kg_h = kgemb((head>=left_num).long())
+        kg_t = kgemb((tail>=left_num).long())
+        kg = torch.cat([kg_h, kg_t], dim=0)
 
         message = hs + hr
-        alpha = torch.sigmoid(self.w_alpha(nn.ReLU()(self.Ws_attn(hs) + self.Wr_attn(hr))))
+        alpha = torch.sigmoid(self.w_alpha(nn.ReLU()(self.Ws_attn(hs) + self.Wr_attn(hr) + self.Wkg_attn(kg))))
         message = alpha * message
 
         message_agg = scatter(message, index=obj, dim=0, dim_size=n_node, reduce='sum')
@@ -152,6 +156,7 @@ class MASGNN(torch.nn.Module):
         self.dropout = nn.Dropout(params.dropout)
         self.W_final = nn.Linear(self.hidden_dim if self.mm else self.hidden_dim, 1, bias=False)  # get score todo: try to use mlp
         self.gate = nn.GRU(self.hidden_dim, self.hidden_dim)
+        self.kgemb = nn.Embedding(2, self.hidden_dim)
         if self.mm:
             self.img_features = F.normalize(torch.FloatTensor(self.loader.images_list)).cuda()
             self.att_features = torch.FloatTensor(self.loader.att_features).cuda()
@@ -243,7 +248,7 @@ class MASGNN(torch.nn.Module):
             # print(old_nodes_new_idx)
             # print(hidden)
             # print(h0)
-            hidden = self.gnn_layers[i](hidden, edges, nodes.size(0))
+            hidden = self.gnn_layers[i](hidden, edges, nodes.size(0), self.kgemb, self.left_num)
             # print(hidden)
 
             # if self.mm:
