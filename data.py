@@ -58,7 +58,10 @@ def load_eva_data(args):
     left_ents,left_id2name = get_ids(e1,file_dir)
     right_ents,right_id2name = get_ids(e2,file_dir)
     id2name = {**left_id2name, **right_id2name}
-    id2rel = get_id2rel(os.path.join(file_dir, 'id2relation.txt'))
+    if not args.data_choice == "DBP15K":
+        id2rel = get_id2rel(os.path.join(file_dir, 'id2relation.txt'))
+    else:
+        id2rel = None
     ENT_NUM = len(ent2id_dict)
     REL_NUM = len(r_hs)
     np.random.shuffle(ills)
@@ -458,59 +461,109 @@ def dbp_value(s):
 def load_attr_withNums(datas,fns, ent2id_dict, file_dir, topk=0):
     ans =  [load_attr_withNum(data,fn,ent2id_dict) for data,fn in zip(datas,fns)]
     if topk!=0:
-        num_att_left = len(ans[0])
-        att_rel_features = np.load(os.path.join(file_dir, 'att_rel_features.npy'), allow_pickle=True)
-        rels = torch.FloatTensor(att_rel_features).cuda()
-        sim_rels_left = torch.mm(rels[:num_att_left], rels[num_att_left:].T)
-        sim_rels_right = torch.mm(rels[num_att_left:], rels[:num_att_left].T)
-        # get the max sim at row
-        sim_rels_left = torch.max(sim_rels_left, dim=1)[0]
-        sim_rels_right = torch.max(sim_rels_right, dim=1)[0]
-        # get the topk rels
-        topk_rels_left = torch.topk(sim_rels_left, topk, dim=0)[1]
-        topk_rels_right = torch.topk(sim_rels_right, topk, dim=0)[1]
-        
-        topk_rels_left = topk_rels_left.cpu().numpy()
-        topk_rels_right = topk_rels_right.cpu().numpy()
-        # topk_rels = np.concatenate([topk_rels_left,topk_rels_right+num_att_left])
-        
+
         rels = []
         rels2index = {}
+        rels2times = {}
         cur = 0
         att2rel = []
-        for i,att in enumerate(ans[0]):
+        for i, att in enumerate(ans[0]+ans[1]):
             if att[1] not in rels2index:
                 rels2index[att[1]] = cur
                 rels.append(att[1])
                 cur += 1
+                rels2times[att[1]] = 0
+            rels2times[att[1]] += 1
             att2rel.append(rels2index[att[1]])
         att2rel = np.array(att2rel)
-        # contain topkrels
-        common_elements = np.in1d(att2rel, topk_rels_left)
-        common_elements_indices = np.where(common_elements)
+
+        rels_left = []
+        rels2index_left = {}
+        cur = 0
+        att2rel_left = []
+        for i, att in enumerate(ans[0]):
+            if att[1] not in rels2index_left:
+                rels2index_left[att[1]] = cur
+                rels_left.append(att[1])
+                cur += 1
+            att2rel_left.append(rels2index_left[att[1]])
+        att2rel_left = np.array(att2rel_left)
+
+
+        rels_right = []
+        rels2index_right = {}
+        cur = 0
+        att2rel_right = []
+        for i, att in enumerate(ans[1]):
+            if att[1] not in rels2index_right:
+                rels2index_right[att[1]] = cur
+                rels_right.append(att[1])
+                cur += 1
+            att2rel_right.append(rels2index_right[att[1]])
+        att2rel_right = np.array(att2rel_right)
+
+        rels_right = set(rels_right)
+        rels_left = set(rels_left)
+        rels_inter = rels_left.intersection(rels_right)
+        # select topk
+        rels_inter = sorted(rels_inter, key=lambda x: rels2times[x], reverse=True)[:topk]
+
         ans_ = []
-        for i in common_elements_indices:
-            ans_.append(ans[0][i])
+        for i in ans[0]:
+            if i[1] in rels_inter:
+                ans_.append(i)
         num_left = len(ans_)
-        
-        rels = []
-        rels2index = {}
-        cur = 0
-        att2rel = []
-        for i,att in enumerate(ans[1]):
-            if att[1] not in rels2index:
-                rels2index[att[1]] = cur
-                rels.append(att[1])
-                cur += 1
-            att2rel.append(rels2index[att[1]])
-        att2rel = np.array(att2rel)
-        # contain topkrels
-        common_elements = np.in1d(att2rel, topk_rels_right)
-        common_elements_indices = np.where(common_elements)
-        for i in common_elements_indices:
-            ans_.append(ans[1][i])
-        num_right = len(ans_) - num_left
+        for i in ans[1]:
+            if i[1] in rels_inter:
+                ans_.append(i)
+        num_right = len(ans_)-num_left
         return ans_,num_left,num_right
+
+
+
+        # num_att_left = len(rels2index)
+        # att_rel_features = np.load(os.path.join(file_dir, 'att_rel_features.npy'), allow_pickle=True)
+        # rels = torch.FloatTensor(att_rel_features).cuda()
+        # sim_rels_left = torch.mm(rels[:num_att_left], rels[num_att_left:].T)
+        # sim_rels_right = torch.mm(rels[num_att_left:], rels[:num_att_left].T)
+        # # get the max sim at row
+        # sim_rels_left = torch.max(sim_rels_left, dim=1)[0]
+        # sim_rels_right = torch.max(sim_rels_right, dim=1)[0]
+        # # get the topk rels
+        # topk_rels_left = torch.topk(sim_rels_left, topk, dim=0)[1]
+        # topk_rels_right = torch.topk(sim_rels_right, topk, dim=0)[1]
+        #
+        # topk_rels_left = topk_rels_left.cpu().numpy()
+        # topk_rels_right = topk_rels_right.cpu().numpy()
+        # # topk_rels = np.concatenate([topk_rels_left,topk_rels_right+num_att_left])
+        #
+        #
+        # # contain topkrels
+        # common_elements = np.in1d(att2rel, topk_rels_left)
+        # common_elements_indices = list(np.where(common_elements)[0])
+        # ans_ = []
+        # for i in common_elements_indices:
+        #     ans_.append(ans[0][i])
+        # num_left = len(ans_)
+        #
+        # rels = []
+        # rels2index = {}
+        # cur = 0
+        # att2rel = []
+        # for i,att in enumerate(ans[1]):
+        #     if att[1] not in rels2index:
+        #         rels2index[att[1]] = cur
+        #         rels.append(att[1])
+        #         cur += 1
+        #     att2rel.append(rels2index[att[1]])
+        # att2rel = np.array(att2rel)
+        # # contain topkrels
+        # common_elements = np.in1d(att2rel, topk_rels_right)
+        # common_elements_indices = list(np.where(common_elements)[0])
+        # for i in common_elements_indices:
+        #     ans_.append(ans[1][i])
+        # num_right = len(ans_) - num_left
+        # return ans_,num_left,num_right
             
         
         
