@@ -59,7 +59,7 @@ class BaseModel(object):
             scores = max_n - scores
             pos_scores = scores[[torch.arange(len(scores)).cuda(), torch.LongTensor(triple[:, 2]).cuda()]]
             # extend pos_scores to scores
-            pos_scores = pos_scores.repeat(1, scores.shape[1]).view(scores.shape[0], scores.shape[1])
+            pos_scores = pos_scores.unsqueeze(-1)
             l = gamma + pos_scores - scores
             with torch.no_grad():
                 mu = torch.mean(l, 1, keepdim=True)

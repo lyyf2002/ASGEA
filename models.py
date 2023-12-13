@@ -121,7 +121,7 @@ class GNNLayer(torch.nn.Module):
 
         kg_h = kgemb((head>=left_num).long())
         kg_t = kgemb((tail>=left_num).long())
-        kg = torch.cat([kg_h, kg_t], dim=0)
+        kg = torch.cat([kg_h, kg_t], dim=1)
 
         message = hs + hr
         alpha = torch.sigmoid(self.w_alpha(nn.ReLU()(self.Ws_attn(hs) + self.Wr_attn(hr) + self.Wkg_attn(kg))))
