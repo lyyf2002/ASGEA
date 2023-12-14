@@ -36,7 +36,7 @@ parser.add_argument("--MLP_dropout", type=float, default=0.2)
 
 parser.add_argument("--n_ent", type=int, default=0)
 parser.add_argument("--n_rel", type=int, default=0)
-parser.add_argument("--topk", type=int,default=1000)
+parser.add_argument("--topk", type=int,default=500)
 parser.add_argument("--stru_dim", type=int, default=16)
 parser.add_argument("--text_dim", type=int, default=768)
 parser.add_argument("--img_dim", type=int, default=2048)

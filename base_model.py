@@ -49,23 +49,21 @@ class BaseModel(object):
             self.model.zero_grad()
             scores = self.model(triple[:,0])
 
-            # pos_scores = scores[[torch.arange(len(scores)).cuda(),torch.LongTensor(triple[:,2]).cuda()]]
-            # max_n = torch.max(scores, 1, keepdim=True)[0]
-            # loss = torch.sum(- pos_scores + max_n + torch.log(torch.sum(torch.exp(scores - max_n),1)))
-            gamma = 1.0
-            lambd = 3
-            tau = 1
+            pos_scores = scores[[torch.arange(len(scores)).cuda(),torch.LongTensor(triple[:,2]).cuda()]]
             max_n = torch.max(scores, 1, keepdim=True)[0]
-            scores = max_n - scores
-            pos_scores = scores[[torch.arange(len(scores)).cuda(), torch.LongTensor(triple[:, 2]).cuda()]]
-            # extend pos_scores to scores
-            pos_scores = pos_scores.unsqueeze(-1)
-            l = gamma + pos_scores - scores
-            with torch.no_grad():
-                mu = torch.mean(l, 1, keepdim=True)
-                sig = torch.sum((l - mu) ** 2, 1, keepdim=True) / (scores.shape[1])
-            ln = (l - mu) / torch.sqrt(sig + 1e-6)
-            loss = torch.sum(torch.log(1 + torch.sum(torch.exp(lambd * ln + tau), 1)))
+            loss = torch.sum(- pos_scores + max_n + torch.log(torch.sum(torch.exp(scores - max_n),1)))
+            # gamma = 0.1
+            # lambd = 1
+            # tau = 1
+            # max_n = torch.max(scores, 1, keepdim=True)[0]
+            # scores = max_n - scores
+            # pos_scores = scores[[torch.arange(len(scores)).cuda(), torch.LongTensor(triple[:, 2]).cuda()]]
+            # # extend pos_scores to scores
+            # pos_scores = pos_scores.unsqueeze(-1)
+            # l = gamma + pos_scores - scores
+            # ln = (l - l.mean(dim=-1, keepdim=True).detach()) / l.std(dim=-1, keepdim=True).detach()
+            # # ln = (l - mu) / torch.sqrt(sig + 1e-6)
+            # loss = torch.sum(torch.log(1 + torch.sum(torch.exp(lambd * ln + tau), 1)))
 
             loss.backward()
             self.optimizer.step()
