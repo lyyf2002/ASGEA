@@ -49,8 +49,12 @@ class Collator_base(object):
 #     return KGs, non_train, train_ill, test_ill, eval_ill, test_ill_
 #
 
+
 def load_eva_data(args):
-    file_dir = osp.join(args.data_path, args.data_choice, args.data_split)
+    if "OEA" in args.data_choice:
+        file_dir = osp.join(args.data_path, "OpenEA", args.data_choice)
+    else:
+        file_dir = osp.join(args.data_path, args.data_choice, args.data_split)
     lang_list = [1, 2]
     ent2id_dict, ills, triples, r_hs, r_ts, ids = read_raw_data(file_dir, lang_list)
     e1 = os.path.join(file_dir, 'ent_ids_1')
@@ -67,10 +71,10 @@ def load_eva_data(args):
     np.random.shuffle(ills)
     if "V1" in file_dir:
         split = "norm"
-        img_vec_path = osp.join(args.data_path, "pkls/dbpedia_wikidata_15k_norm_GA_id_img_feature_dict.pkl")
+        img_vec_path = osp.join(args.data_path, f"OpenEA/pkl/{args.data_choice}_id_img_feature_dict.pkl")
     elif "V2" in file_dir:
         split = "dense"
-        img_vec_path = osp.join(args.data_path, "pkls/dbpedia_wikidata_15k_dense_GA_id_img_feature_dict.pkl")
+        img_vec_path = osp.join(args.data_path, f"OpenEA/pkl/{args.data_choice}_id_img_feature_dict.pkl")
     elif "FB" in file_dir:
         img_vec_path = osp.join(args.data_path, f"pkls/{args.data_choice}_id_img_feature_dict.pkl")
     else:
@@ -128,7 +132,12 @@ def load_eva_data(args):
 
     rel_features = load_relation(ENT_NUM, triples, 1000)
     print(f"relation feature shape:{rel_features.shape}")
-    if 'FB' in args.data_choice:
+    if 'OEA' in args.data_choice:
+        a1 = os.path.join(file_dir, f'attr_triples_1')
+        a2 = os.path.join(file_dir, f'attr_triples_2')
+        att_features, num_att_left, num_att_right = load_attr_withNums(['dbp', 'dbp'], [a1, a2], ent2id_dict, file_dir,
+                                                                       topk=args.topk)
+    elif 'FB' in args.data_choice:
         a1 = os.path.join(file_dir, 'FB15K_NumericalTriples.txt')
         a2 = os.path.join(file_dir, 'DB15K_NumericalTriples.txt') if 'DB' in args.data_choice else os.path.join(file_dir, 'YAGO15K_NumericalTriples.txt')
         att_features, num_att_left, num_att_right = load_attr_withNums(['FB15K','DB15K'] if 'DB' in args.data_choice else ['FB15K','YAGO15K'],[a1, a2], ent2id_dict, file_dir, topk=0)
@@ -428,7 +437,9 @@ def db_time(s):
     d = int(s[2]) if s[2]!='##' and s[2]!='' else 1
     return y + (m-1)/12 +(d-1)/30/12
 def dbp_str(s):
-    t = s[1:-1].split('/')[-1].replace('_',' ')
+    if '<'==s[0] and '>'==s[-1]:
+        s = s[1:-1]
+    t = s.split('/')[-1].replace('_',' ')
     t_ = ' '.join(split_camel_case(t))
     if t_ == '':
         return t
@@ -437,11 +448,17 @@ def dbp_str(s):
 
 def dbp_value(s):
     if '^^' in s:
-        s = s.split("^^")[0][1:-1]
+        s = s.split("^^")[0]
+        if '<' == s[0] and '>' == s[-1]:
+            s = s[1:-1]
     elif '@' in s:
-        s = s.split('@')[0][1:-1]
+        s = s.split('@')[0]
+        if '<' == s[0] and '>' == s[-1]:
+            s = s[1:-1]
     else:
-        return s[1:-1]
+        if '<' == s[0] and '>' == s[-1]:
+            s = s[1:-1]
+        return s
     if 'e' in s:
         return s
     
@@ -505,6 +522,8 @@ def load_attr_withNums(datas,fns, ent2id_dict, file_dir, topk=0):
         rels_right = set(rels_right)
         rels_left = set(rels_left)
         rels_inter = rels_left.intersection(rels_right)
+        if len(rels_inter)==0:
+            rels_inter = rels
         # select topk
         rels_inter = sorted(rels_inter, key=lambda x: rels2times[x], reverse=True)[:topk]
 
