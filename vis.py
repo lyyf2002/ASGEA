@@ -1,3 +1,4 @@
+import json
 import os
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 import argparse
@@ -8,14 +9,17 @@ from load_data import DataLoader
 from base_model import BaseModel
 import time
 from collections import OrderedDict
+import networkx as nx
+import matplotlib.pyplot as plt
+
 
 parser = argparse.ArgumentParser(description="Parser for MASEA")
 parser.add_argument("--data_path", default="../data/mmkg", type=str, help="Experiment path")
-parser.add_argument("--data_choice", default="DBP15K", type=str, choices=["DBP15K", "DWY", "FBYG15K", "FBDB15K"],
+parser.add_argument("--data_choice", default="FBDB15K", type=str, choices=["DBP15K", "DWY", "FBYG15K", "FBDB15K"],
                     help="Experiment path")
-parser.add_argument("--data_split", default="zh_en", type=str, help="Experiment split",
+parser.add_argument("--data_split", default="norm", type=str, help="Experiment split",
                     choices=["dbp_wd_15k_V2", "dbp_wd_15k_V1", "zh_en", "ja_en", "fr_en", "norm"])
-parser.add_argument("--data_rate", type=float, default=0.3, choices=[0.2, 0.3, 0.5, 0.8], help="training set rate")
+parser.add_argument("--data_rate", type=float, default=0.8, choices=[0.2, 0.3, 0.5, 0.8], help="training set rate")
 parser.add_argument('--seed', type=str, default=1234)
 parser.add_argument('--gpu', type=int, default=0)
 parser.add_argument('--perf_file', type=str, default='perf.txt')
@@ -36,7 +40,6 @@ parser.add_argument("--MLP_dropout", type=float, default=0.2)
 
 parser.add_argument("--n_ent", type=int, default=0)
 parser.add_argument("--n_rel", type=int, default=0)
-parser.add_argument("--IMGop", type=str, default='mul')
 
 parser.add_argument("--stru_dim", type=int, default=16)
 parser.add_argument("--text_dim", type=int, default=768)
@@ -200,46 +203,83 @@ if __name__ == '__main__':
         from nni.utils import merge_parameter
         nni_params = nni.get_next_parameter()
         args = merge_parameter(args, nni_params)
-    if 'FB' in args.data_choice:
-        args.topk = 0
     print(args)
     print(args, file=open(args.perf_file, 'a'))
     loader = DataLoader(args)
-    model = BaseModel(args, loader)
+    id2name = loader.id2name
+    id2rel = loader.id2rel
+    n_rel = loader.n_rel
+    id2rel_reverse = {}
+    for k, v in id2rel.items():
+        id2rel_reverse[k+n_rel] = v+'_reverse'
+    id2rel = {**id2rel , **id2rel_reverse}
+    id2rel[2*n_rel] = 'self_loop'
+    id2rel[2*n_rel+1] = 'anchor'
+    id2rel[2*n_rel+2] = 'anchor_reverse'
+    left_entity = len(loader.left_ents)
+    
+    batch_size = 1
+    n_data = loader.n_test
+    n_batch = n_data // batch_size + (n_data % batch_size > 0)
 
-    best_h1 = 0
-    best_h3 = 0
-    best_h5 = 0
-    best_h10 = 0
+    for i in range(n_batch):
+        start = i*batch_size
+        end = min(n_data, (i+1)*batch_size)
+        batch_idx = np.arange(start, end)
+        triple = loader.get_batch(batch_idx, data='test')
+        subs, rels, objs = triple[:,0],triple[:,1],triple[:,2]
+        sub = subs[0]
+        rel = rels[0]   
+        obj = objs[0]
+        edges = loader.get_vis_subgraph(sub, obj, 5)
+        all_edges_size = sum([len(edge) for edge in edges])
+        print(all_edges_size)
+        if all_edges_size >100 or all_edges_size == 0:
+            continue
+        pos = {}
+        x_pos = [-5,-3, -1, 1, 3, 5]
+        g = {'nodes': [], 'edges': []}
+        G = nx.DiGraph()
+        for node in edges[0][:,0].unique():
+            G.add_node(str(node.item()) + '_' + str(0), desc=id2name[node.item()] + '_' + str(0), layer=0)
+            g['nodes'].append({'id': str(node.item()) + '_' + str(0), 'name': id2name[node.item()] + '_' + str(0),"class": 1 if node.item() < left_entity else 2 ,"imgsrc": "None","content": "None"} )
+            pos[str(node.item()) + '_' + str(0)] = (x_pos[0], 0)
+        for idx, edge in enumerate(edges):
+            # node_1 = edge[:,0].unique()
+            node_2 = edge[:,2].unique()
+            size = len(node_2)
 
-    best_str = ''
-    wait_patient = 10
-    epoch = 0
+            for y, node in enumerate(node_2):
+                G.add_node(str(node.item())+'_'+str(idx+1), desc=id2name[node.item()]+'_'+str(idx+1),layer=idx+1)
+                g['nodes'].append({'id': str(node.item())+'_'+str(idx+1), 'name': id2name[node.item()]+'_'+str(idx+1),"class": 1 if node.item() < left_entity else 2,"imgsrc": "None","content": "None"} )
+                pos[str(node.item())+'_'+str(idx+1)] = (x_pos[idx+1], 10/(size+1) * (y+1) - 5)
+            for e in edge:
+                g['edges'].append({'source': str(e[0].item())+'_'+str(idx), 'target': str(e[2].item())+'_'+str(idx+1), 'name': id2rel[e[1].item()]} )
+                G.add_edge(str(e[0].item())+'_'+str(idx), str(e[2].item())+'_'+str(idx+1), name=id2rel[e[1].item()])
 
-    best_mrr = 0
 
-    while wait_patient > 0:
-        epoch += 1
-        mrr,t_h1, t_h3, t_h5, t_h10, out_str = model.train_batch()
-        if args.nni:
-            nni.report_intermediate_result({'default':mrr,'h1':t_h1,'h3':t_h3,'h5':t_h5,'h10':t_h10})
-        with open(args.perf_file, 'a+') as f:
-            f.write(out_str)
-        if mrr > best_mrr:
-            best_mrr = mrr
-            best_h1 = t_h1
-            best_h3 = t_h3
-            best_h5 = t_h5
-            best_h10 = t_h10
-            best_str = out_str
-            print(str(epoch) + '\t' + best_str)
-            with open(args.perf_file,'a+') as f:
-                f.write("best at "+ str(epoch) + '\t' + best_str)
-            wait_patient = 10
-        else:
-            wait_patient -= 1
+        # nodes = torch.cat([edges[:,0], edges[:,2]]).unique()
+        # for node in nodes:
+        #     G.add_node(node.item(), desc=id2name[node.item()])
+        # for edge in edges:
+        #     G.add_edge(edge[0].item(), edge[2].item(), name=id2rel[edge[1].item()])
 
-    if args.nni:
-        nni.report_final_result({'default':best_mrr,'h1':best_h1,'h3':best_h3,'h5':best_h5,'h10':best_h10})
-    print(best_str)
+        # draw graph with labels
+        plt.figure(figsize=(16, 16), dpi=80)
+        # pos = nx.kamada_kawai_layout(G)
+        pos = nx.spring_layout(G)
+        nx.draw(G, pos)
+        nx.draw_networkx_nodes(G, pos=pos, nodelist=[str(sub.item()) + '_' + str(0),str(obj.item()) + '_' + str(5)], node_color='red', node_size=1000)
+        node_labels = nx.get_node_attributes(G, 'desc')
+        nx.draw_networkx_labels(G, pos, labels=node_labels)
+        edge_labels = nx.get_edge_attributes(G, 'name')
+        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+
+        plt.savefig(f'FBDB_{sub}_{rel}_{obj}.png', dpi=100)
+        plt.close()
+        json.dump(g, open(f'FBDB_{sub}_{rel}_{obj}.json', 'w',encoding='utf-8'), indent=4)
+
+
+
+
 

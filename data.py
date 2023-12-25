@@ -49,23 +49,32 @@ class Collator_base(object):
 #     return KGs, non_train, train_ill, test_ill, eval_ill, test_ill_
 #
 
+
 def load_eva_data(args):
-    file_dir = osp.join(args.data_path, args.data_choice, args.data_split)
+    if "OEA" in args.data_choice:
+        file_dir = osp.join(args.data_path, "OpenEA", args.data_choice)
+    else:
+        file_dir = osp.join(args.data_path, args.data_choice, args.data_split)
     lang_list = [1, 2]
     ent2id_dict, ills, triples, r_hs, r_ts, ids = read_raw_data(file_dir, lang_list)
     e1 = os.path.join(file_dir, 'ent_ids_1')
     e2 = os.path.join(file_dir, 'ent_ids_2')
-    left_ents = get_ids(e1)
-    right_ents = get_ids(e2)
+    left_ents,left_id2name = get_ids(e1,file_dir)
+    right_ents,right_id2name = get_ids(e2,file_dir)
+    id2name = {**left_id2name, **right_id2name}
+    if not args.data_choice == "DBP15K":
+        id2rel = get_id2rel(os.path.join(file_dir, 'id2relation.txt'))
+    else:
+        id2rel = None
     ENT_NUM = len(ent2id_dict)
     REL_NUM = len(r_hs)
     np.random.shuffle(ills)
     if "V1" in file_dir:
         split = "norm"
-        img_vec_path = osp.join(args.data_path, "pkls/dbpedia_wikidata_15k_norm_GA_id_img_feature_dict.pkl")
+        img_vec_path = osp.join(args.data_path, f"OpenEA/pkl/{args.data_choice}_id_img_feature_dict.pkl")
     elif "V2" in file_dir:
         split = "dense"
-        img_vec_path = osp.join(args.data_path, "pkls/dbpedia_wikidata_15k_dense_GA_id_img_feature_dict.pkl")
+        img_vec_path = osp.join(args.data_path, f"OpenEA/pkl/{args.data_choice}_id_img_feature_dict.pkl")
     elif "FB" in file_dir:
         img_vec_path = osp.join(args.data_path, f"pkls/{args.data_choice}_id_img_feature_dict.pkl")
     else:
@@ -123,14 +132,20 @@ def load_eva_data(args):
 
     rel_features = load_relation(ENT_NUM, triples, 1000)
     print(f"relation feature shape:{rel_features.shape}")
-    if 'FB' in args.data_choice:
+    if 'OEA' in args.data_choice:
+        a1 = os.path.join(file_dir, f'attr_triples_1')
+        a2 = os.path.join(file_dir, f'attr_triples_2')
+        att_features, num_att_left, num_att_right = load_attr_withNums(['dbp', 'dbp'], [a1, a2], ent2id_dict, file_dir,
+                                                                       topk=args.topk)
+    elif 'FB' in args.data_choice:
         a1 = os.path.join(file_dir, 'FB15K_NumericalTriples.txt')
         a2 = os.path.join(file_dir, 'DB15K_NumericalTriples.txt') if 'DB' in args.data_choice else os.path.join(file_dir, 'YAGO15K_NumericalTriples.txt')
-        att_features, num_att_left, num_att_right = load_attr_withNums(['FB15K','DB15K'] if 'DB' in args.data_choice else ['FB15K','YAGO15K'],[a1, a2], ent2id_dict)
+        att_features, num_att_left, num_att_right = load_attr_withNums(['FB15K','DB15K'] if 'DB' in args.data_choice else ['FB15K','YAGO15K'],[a1, a2], ent2id_dict, file_dir, topk=0)
     else:
-        a1 = os.path.join(file_dir, 'training_attrs_1')
-        a2 = os.path.join(file_dir, 'training_attrs_2')
-        att_features = load_attr([a1, a2], ENT_NUM, ent2id_dict, 1000)  # attr
+        att1,att2 = args.data_split.split('_')
+        a1 = os.path.join(file_dir, f'{att1}_att_triples')
+        a2 = os.path.join(file_dir, f'{att2}_att_triples')
+        att_features, num_att_left, num_att_right = load_attr_withNums([att1,att2],[a1, a2], ent2id_dict, file_dir, topk=args.topk)
     print(f"attribute feature shape:{len(att_features)}")
     print("-----dataset summary-----")
     print(f"dataset:\t\t {file_dir}")
@@ -158,7 +173,9 @@ def load_eva_data(args):
         'name_features': name_features,
         'char_features': char_features,
         'input_idx': input_idx,
-        'triples': triples
+        'triples': triples,
+        'id2name':id2name,
+        'id2rel':id2rel
     }, {"left": left_non_train, "right": right_non_train},left_ents,right_ents, train_ill, test_ill, eval_ill, test_ill_
 
 
@@ -358,14 +375,41 @@ def loadfile(fn, num=1):
     return ret
 
 
-def get_ids(fn):
+def get_ids(fn,file_dir):
     ids = []
+    id2name = {}
+    fbid2name = {}
+    if 'FB' in fn:
+        with open(os.path.join(file_dir, 'fbid2name.txt'), encoding='utf-8') as f:
+            for line in f:
+                th = line[:-1].split('\t')
+                fbid2name[th[0]] = th[1]
     with open(fn, encoding='utf-8') as f:
         for line in f:
             th = line[:-1].split('\t')
             ids.append(int(th[0]))
-    return ids
+            name = th[1]
+            if '<http://yago-knowledge.org/resource/' in name:
+                name = name[1:-1].split('/')[-1]
+            if 'FB' in fn:
+                if name in fbid2name:
+                    name = fbid2name[name]
+            if '<http://dbpedia.org/resource/' in name:
+                name = name[1:-1].split('/')[-1].replace('_', ' ')
+            id2name[int(th[0])] = name
 
+    return ids, id2name
+
+def get_id2rel(fn):
+    id2rel = {}
+    with open(fn, encoding='utf-8') as f:
+        for line in f:
+            th = line[:-1].split('\t')
+            rel = th[1]
+            if '/' in rel:
+                rel = rel.split('/')[-1]
+            id2rel[int(th[0])] = rel
+    return id2rel
 
 def get_ent2id(fns):
     ent2id = {}
@@ -392,19 +436,167 @@ def db_time(s):
     m = int(s[1]) if s[1]!='##'else 1
     d = int(s[2]) if s[2]!='##' and s[2]!='' else 1
     return y + (m-1)/12 +(d-1)/30/12
+def dbp_str(s):
+    if '<'==s[0] and '>'==s[-1]:
+        s = s[1:-1]
+    t = s.split('/')[-1].replace('_',' ')
+    t_ = ' '.join(split_camel_case(t))
+    if t_ == '':
+        return t
+    return t_
+    
+
+def dbp_value(s):
+    if '^^' in s:
+        s = s.split("^^")[0]
+        if '<' == s[0] and '>' == s[-1]:
+            s = s[1:-1]
+    elif '@' in s:
+        s = s.split('@')[0]
+        if '<' == s[0] and '>' == s[-1]:
+            s = s[1:-1]
+    else:
+        if '<' == s[0] and '>' == s[-1]:
+            s = s[1:-1]
+        return s
+    if 'e' in s:
+        return s
+    
+    if '-' not in s[1:]:
+        return s
+    try:
+        s_ = s.split('-')
+        y = int(s_[0].replace('#','0'))
+        m = int(s_[1]) if s_[1]!='##'else 1
+        d = int(s_[2]) if s_[2]!='##' and s_[2]!='' else 1
+        return y + (m-1)/12 +(d-1)/30/12
+    except:
+        return s
 
 
 
-def load_attr_withNums(datas,fns, ent2id_dict):
+def load_attr_withNums(datas,fns, ent2id_dict, file_dir, topk=0):
     ans =  [load_attr_withNum(data,fn,ent2id_dict) for data,fn in zip(datas,fns)]
+    if topk!=0:
+
+        rels = []
+        rels2index = {}
+        rels2times = {}
+        cur = 0
+        att2rel = []
+        for i, att in enumerate(ans[0]+ans[1]):
+            if att[1] not in rels2index:
+                rels2index[att[1]] = cur
+                rels.append(att[1])
+                cur += 1
+                rels2times[att[1]] = 0
+            rels2times[att[1]] += 1
+            att2rel.append(rels2index[att[1]])
+        att2rel = np.array(att2rel)
+
+        rels_left = []
+        rels2index_left = {}
+        cur = 0
+        att2rel_left = []
+        for i, att in enumerate(ans[0]):
+            if att[1] not in rels2index_left:
+                rels2index_left[att[1]] = cur
+                rels_left.append(att[1])
+                cur += 1
+            att2rel_left.append(rels2index_left[att[1]])
+        att2rel_left = np.array(att2rel_left)
+
+
+        rels_right = []
+        rels2index_right = {}
+        cur = 0
+        att2rel_right = []
+        for i, att in enumerate(ans[1]):
+            if att[1] not in rels2index_right:
+                rels2index_right[att[1]] = cur
+                rels_right.append(att[1])
+                cur += 1
+            att2rel_right.append(rels2index_right[att[1]])
+        att2rel_right = np.array(att2rel_right)
+
+        rels_right = set(rels_right)
+        rels_left = set(rels_left)
+        rels_inter = rels_left.intersection(rels_right)
+        if len(rels_inter)==0:
+            rels_inter = rels
+        # select topk
+        rels_inter = sorted(rels_inter, key=lambda x: rels2times[x], reverse=True)[:topk]
+
+        ans_ = []
+        for i in ans[0]:
+            if i[1] in rels_inter:
+                ans_.append(i)
+        num_left = len(ans_)
+        for i in ans[1]:
+            if i[1] in rels_inter:
+                ans_.append(i)
+        num_right = len(ans_)-num_left
+        return ans_,num_left,num_right
+
+
+
+        # num_att_left = len(rels2index)
+        # att_rel_features = np.load(os.path.join(file_dir, 'att_rel_features.npy'), allow_pickle=True)
+        # rels = torch.FloatTensor(att_rel_features).cuda()
+        # sim_rels_left = torch.mm(rels[:num_att_left], rels[num_att_left:].T)
+        # sim_rels_right = torch.mm(rels[num_att_left:], rels[:num_att_left].T)
+        # # get the max sim at row
+        # sim_rels_left = torch.max(sim_rels_left, dim=1)[0]
+        # sim_rels_right = torch.max(sim_rels_right, dim=1)[0]
+        # # get the topk rels
+        # topk_rels_left = torch.topk(sim_rels_left, topk, dim=0)[1]
+        # topk_rels_right = torch.topk(sim_rels_right, topk, dim=0)[1]
+        #
+        # topk_rels_left = topk_rels_left.cpu().numpy()
+        # topk_rels_right = topk_rels_right.cpu().numpy()
+        # # topk_rels = np.concatenate([topk_rels_left,topk_rels_right+num_att_left])
+        #
+        #
+        # # contain topkrels
+        # common_elements = np.in1d(att2rel, topk_rels_left)
+        # common_elements_indices = list(np.where(common_elements)[0])
+        # ans_ = []
+        # for i in common_elements_indices:
+        #     ans_.append(ans[0][i])
+        # num_left = len(ans_)
+        #
+        # rels = []
+        # rels2index = {}
+        # cur = 0
+        # att2rel = []
+        # for i,att in enumerate(ans[1]):
+        #     if att[1] not in rels2index:
+        #         rels2index[att[1]] = cur
+        #         rels.append(att[1])
+        #         cur += 1
+        #     att2rel.append(rels2index[att[1]])
+        # att2rel = np.array(att2rel)
+        # # contain topkrels
+        # common_elements = np.in1d(att2rel, topk_rels_right)
+        # common_elements_indices = list(np.where(common_elements)[0])
+        # for i in common_elements_indices:
+        #     ans_.append(ans[1][i])
+        # num_right = len(ans_) - num_left
+        # return ans_,num_left,num_right
+            
+        
+        
+        
+        
     return ans[0]+ans[1], len(ans[0]), len(ans[1])
 def load_attr_withNum(data, fn, ent2id):
 
     with open(fn, 'r',encoding='utf-8') as f:
         Numericals = f.readlines()
-    Numericals_ = list(set(Numericals))
-    Numericals_.sort(key = Numericals.index)
-    Numericals = Numericals_
+    if data == 'FB15K' or data == 'DB15K' or data=='YAGO15K':
+        Numericals_ = list(set(Numericals))
+        Numericals_.sort(key = Numericals.index)
+        Numericals = Numericals_
 
     if data=='FB15K':
         Numericals = [i[:-1].split('\t') for i in Numericals]
@@ -417,6 +609,10 @@ def load_attr_withNum(data, fn, ent2id):
     elif data=='YAGO15K':
         Numericals = [i[:-1].split(' ') if '\t' not in i else i[:-1].split('\t') for i in Numericals]
         Numericals = [(ent2id[i[0]], db_str(i[1]), db_time(i[2])) for i in Numericals]
+    
+    else:
+        Numericals = [i[:-1].split(' ') if '\t' not in i else i[:-1].split('\t') for i in Numericals]
+        Numericals = [(ent2id[i[0][1:-1]], dbp_str(i[1]), dbp_value(' '.join(i[2:-1]))) for i in Numericals]
         
     return Numericals
 
