@@ -16,15 +16,19 @@ parser.add_argument("--port", "-p", type=int, default=8081)
 params = parser.parse_args()
 
 search_space = {
-        "n_layer": {"_type": "choice", "_value": [5]},
-        "n_batch": {"_type": "choice", "_value": [4,5,6]},
+        # "n_layer": {"_type": "choice", "_value": [5]},
+        "n_batch": {"_type": "choice", "_value": [16,8]},
         "lr": {"_type": "loguniform", "_value": [0.0001, 0.01]},
         "lamb": {"_type": "uniform", "_value": [0.00001, 0.005]},
-        "dropout": {"_type": "uniform", "_value": [0, 0.5]},
-        "act": {"_type": "choice", "_value": ["relu", "idd", "tanh"]},
-        "hidden_dim": {"_type": "choice", "_value": [32, 48, 64]},
+        # "dropout": {"_type": "uniform", "_value": [0, 0.5]},
+        # "act": {"_type": "choice", "_value": ["relu", "idd", "tanh"]},
+        # "hidden_dim": {"_type": "choice", "_value": [32, 48, 64, 96, 128]},
         "decay_rate": {"_type": "uniform", "_value": [0.99, 1]},
         "attn_dim": {"_type": "choice", "_value": [5]},
+        "MLP_hidden_dim" : {"_type": "choice", "_value": [32, 48, 64, 96, 128, 300,512,1024]},
+        "MLP_num_layers" : {"_type": "choice", "_value": [1,2,3]},
+        "MLP_dropout": {"_type": "uniform", "_value": [0, 0.5]},
+        "IMGop": {"_type": "choice", "_value": ["sub", "add", "mul", "cat"]},
     }
 
 
@@ -39,9 +43,9 @@ experiment.config.search_space = search_space
 experiment.config.tuner.name = 'TPE'
 experiment.config.tuner.class_args['optimize_mode'] = 'maximize'
 experiment.config.max_trial_number = 500
-experiment.config.trial_concurrency = 4
+experiment.config.trial_concurrency = 1
 experiment.config.max_trial_duration = '240h'
-experiment.config.training_service.gpu_indices = [0,1,2,3]
+# experiment.config.training_service.gpu_indices = [0,1,2,3]
 # experiment.config.training_service.gpu_indices = [0,1]
 experiment.config.trial_gpu_number = 1
 experiment.config.training_service.use_active_gpu = True

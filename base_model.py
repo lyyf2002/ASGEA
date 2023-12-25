@@ -40,7 +40,7 @@ class BaseModel(object):
 
         t_time = time.time()
         self.model.train()
-        for i in tqdm(range(n_batch)):
+        for i in tqdm(range(18,n_batch)):
             start = i*batch_size
             end = min(self.n_train, (i+1)*batch_size)
             batch_idx = np.arange(start, end)
