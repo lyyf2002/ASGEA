@@ -449,14 +449,14 @@ def dbp_str(s):
 def dbp_value(s):
     if '^^' in s:
         s = s.split("^^")[0]
-        if '<' == s[0] and '>' == s[-1]:
+        if ('<' == s[0] and '>' == s[-1]) or ('\"' == s[0] and '\"' == s[-1]):
             s = s[1:-1]
     elif '@' in s:
         s = s.split('@')[0]
-        if '<' == s[0] and '>' == s[-1]:
+        if ('<' == s[0] and '>' == s[-1]) or ('\"' == s[0] and '\"' == s[-1]):
             s = s[1:-1]
     else:
-        if '<' == s[0] and '>' == s[-1]:
+        if ('<' == s[0] and '>' == s[-1]) or ('\"' == s[0] and '\"' == s[-1]):
             s = s[1:-1]
         return s
     if 'e' in s:
@@ -612,7 +612,7 @@ def load_attr_withNum(data, fn, ent2id):
     
     else:
         Numericals = [i[:-1].split(' ') if '\t' not in i else i[:-1].split('\t') for i in Numericals]
-        Numericals = [(ent2id[i[0][1:-1]], dbp_str(i[1]), dbp_value(' '.join(i[2:-1]))) for i in Numericals]
+        Numericals = [(ent2id[i[0][1:-1]], dbp_str(i[1]), dbp_value(' '.join(i[2:]))) for i in Numericals]
         
     return Numericals
 
