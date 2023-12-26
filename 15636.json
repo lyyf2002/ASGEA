@@ -1,0 +1,65 @@
+{
+    "nodes": [
+        {
+            "id": 15152,
+            "name": "France"
+        },
+        {
+            "id": 15248,
+            "name": "Poland"
+        },
+        {
+            "id": 15261,
+            "name": "Romania"
+        },
+        {
+            "id": 15636,
+            "name": "Claude_Berri"
+        },
+        {
+            "id": 24144,
+            "name": "Paris"
+        },
+        {
+            "id": 27273,
+            "name": "Academy_Awards"
+        }
+    ],
+    "edges": [
+        {
+            "source": "Claude_Berri",
+            "target": "Poland",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Claude_Berri",
+            "target": "Romania",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Claude_Berri",
+            "target": "France",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Claude_Berri",
+            "target": "Paris",
+            "name": "wasBornIn"
+        },
+        {
+            "source": "Claude_Berri",
+            "target": "Paris",
+            "name": "diedIn"
+        },
+        {
+            "source": "Claude_Berri",
+            "target": "Academy_Awards",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Claude_Berri",
+            "target": "Claude_Berri",
+            "name": "self_loop"
+        }
+    ]
+}

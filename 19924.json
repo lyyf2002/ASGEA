@@ -1,0 +1,51 @@
+{
+    "nodes": [
+        {
+            "id": 14977,
+            "name": "United_States"
+        },
+        {
+            "id": 19924,
+            "name": "Carroll_Clark"
+        },
+        {
+            "id": 24107,
+            "name": "Glendale,_California"
+        },
+        {
+            "id": 25769,
+            "name": "Mountain_View,_California"
+        },
+        {
+            "id": 30177,
+            "name": "Emmy_Award"
+        }
+    ],
+    "edges": [
+        {
+            "source": "Carroll_Clark",
+            "target": "United_States",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Carroll_Clark",
+            "target": "Mountain_View,_California",
+            "name": "wasBornIn"
+        },
+        {
+            "source": "Carroll_Clark",
+            "target": "Glendale,_California",
+            "name": "diedIn"
+        },
+        {
+            "source": "Carroll_Clark",
+            "target": "Emmy_Award",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Carroll_Clark",
+            "target": "Carroll_Clark",
+            "name": "self_loop"
+        }
+    ]
+}

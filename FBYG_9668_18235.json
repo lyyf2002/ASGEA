@@ -1,0 +1,122 @@
+{
+    "nodes": [
+        {
+            "id": "9668_0",
+            "name": "Maurice Sendak_0",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "4154_1",
+            "name": "Brooklyn_1",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "8782_1",
+            "name": "Danbury, Connecticut_1",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "9334_1",
+            "name": "Astrid Lindgren Memorial Award_1",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "25636_2",
+            "name": "Brooklyn_2",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "26830_2",
+            "name": "Danbury,_Connecticut_2",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "30302_2",
+            "name": "Astrid_Lindgren_Memorial_Award_2",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "18235_3",
+            "name": "Maurice_Sendak_3",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        }
+    ],
+    "edges": [
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Brooklyn_1",
+            "name": "place_of_birth"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Danbury, Connecticut_1",
+            "name": "place_of_death"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Brooklyn_1",
+            "name": "location"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Astrid Lindgren Memorial Award_1",
+            "name": "award"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Astrid Lindgren Memorial Award_1",
+            "name": "award_winner_reverse"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Brooklyn_1",
+            "name": "people_born_here_reverse"
+        },
+        {
+            "source": "Brooklyn_1",
+            "target": "Brooklyn_2",
+            "name": "anchor"
+        },
+        {
+            "source": "Danbury, Connecticut_1",
+            "target": "Danbury,_Connecticut_2",
+            "name": "anchor"
+        },
+        {
+            "source": "Astrid Lindgren Memorial Award_1",
+            "target": "Astrid_Lindgren_Memorial_Award_2",
+            "name": "anchor"
+        },
+        {
+            "source": "Brooklyn_2",
+            "target": "Maurice_Sendak_3",
+            "name": "wasBornIn_reverse"
+        },
+        {
+            "source": "Danbury,_Connecticut_2",
+            "target": "Maurice_Sendak_3",
+            "name": "diedIn_reverse"
+        },
+        {
+            "source": "Astrid_Lindgren_Memorial_Award_2",
+            "target": "Maurice_Sendak_3",
+            "name": "hasWonPrize_reverse"
+        }
+    ]
+}

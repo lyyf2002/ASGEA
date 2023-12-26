@@ -1,0 +1,60 @@
+{
+    "nodes": [
+        {
+            "id": 14977,
+            "name": "United_States"
+        },
+        {
+            "id": 15274,
+            "name": "England"
+        },
+        {
+            "id": 20331,
+            "name": "Anne_McCaffrey"
+        },
+        {
+            "id": 24239,
+            "name": "Cambridge,_Massachusetts"
+        },
+        {
+            "id": 25572,
+            "name": "County_Wicklow"
+        },
+        {
+            "id": 30193,
+            "name": "Nebula_Award"
+        }
+    ],
+    "edges": [
+        {
+            "source": "Anne_McCaffrey",
+            "target": "United_States",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Anne_McCaffrey",
+            "target": "England",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Anne_McCaffrey",
+            "target": "Cambridge,_Massachusetts",
+            "name": "wasBornIn"
+        },
+        {
+            "source": "Anne_McCaffrey",
+            "target": "County_Wicklow",
+            "name": "diedIn"
+        },
+        {
+            "source": "Anne_McCaffrey",
+            "target": "Nebula_Award",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Anne_McCaffrey",
+            "target": "Anne_McCaffrey",
+            "name": "self_loop"
+        }
+    ]
+}

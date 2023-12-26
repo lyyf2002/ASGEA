@@ -1,0 +1,47 @@
+{
+    "nodes": [
+        {
+            "id": 15326,
+            "name": "India"
+        },
+        {
+            "id": 22869,
+            "name": "Deven_Verma"
+        },
+        {
+            "id": 29354,
+            "name": "Pune"
+        },
+        {
+            "id": 30168,
+            "name": "Filmfare_Awards"
+        }
+    ],
+    "edges": [
+        {
+            "source": "Deven_Verma",
+            "target": "India",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Deven_Verma",
+            "target": "Pune",
+            "name": "wasBornIn"
+        },
+        {
+            "source": "Deven_Verma",
+            "target": "Pune",
+            "name": "diedIn"
+        },
+        {
+            "source": "Deven_Verma",
+            "target": "Filmfare_Awards",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Deven_Verma",
+            "target": "Deven_Verma",
+            "name": "self_loop"
+        }
+    ]
+}

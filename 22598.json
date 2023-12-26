@@ -1,0 +1,69 @@
+{
+    "nodes": [
+        {
+            "id": 14977,
+            "name": "United_States"
+        },
+        {
+            "id": 15073,
+            "name": "New_York_City"
+        },
+        {
+            "id": 15284,
+            "name": "Wales"
+        },
+        {
+            "id": 22598,
+            "name": "Bill_Evans"
+        },
+        {
+            "id": 25440,
+            "name": "Plainfield,_New_Jersey"
+        },
+        {
+            "id": 28002,
+            "name": "Grammy_Award"
+        },
+        {
+            "id": 30166,
+            "name": "Grammy_Lifetime_Achievement_Award"
+        }
+    ],
+    "edges": [
+        {
+            "source": "Bill_Evans",
+            "target": "Wales",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Bill_Evans",
+            "target": "United_States",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Bill_Evans",
+            "target": "Plainfield,_New_Jersey",
+            "name": "wasBornIn"
+        },
+        {
+            "source": "Bill_Evans",
+            "target": "New_York_City",
+            "name": "diedIn"
+        },
+        {
+            "source": "Bill_Evans",
+            "target": "Grammy_Award",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Bill_Evans",
+            "target": "Grammy_Lifetime_Achievement_Award",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Bill_Evans",
+            "target": "Bill_Evans",
+            "name": "self_loop"
+        }
+    ]
+}

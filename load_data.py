@@ -381,6 +381,27 @@ class DataLoader:
             batched_edges.append(layer_edges[i])
         return batched_edges
 
+    def get_vis_nei(self, head_node, hop=1):
+
+        KG = self.tKG
+
+        row, col = KG[:, 0], KG[:, 2]
+        node_mask = row.new_empty(self.n_ent, dtype=torch.bool)
+        # edge_mask = row.new_empty(row.size(0), dtype=torch.bool)
+        subsets = [torch.LongTensor([head_node]).cuda()]
+        raw_layer_edges = []
+        layer_edges = []
+        for i in range(hop):
+            node_mask.fill_(False)
+            node_mask[subsets[-1]] = True
+            edge_mask = torch.index_select(node_mask, 0, row)
+            subsets.append(torch.unique(col[edge_mask]))
+            raw_layer_edges.append(edge_mask)
+            layer_edges.append(KG[edge_mask])
+        edges = torch.cat(layer_edges, dim=0)
+            # layer_edges[i] = torch.unique(layer_edges[i], dim=0)
+        return edges
+
     # def get_neighbors(self, nodes, mode='train', n_hop=0):
     #     if mode == 'train':
     #         KG = self.KG

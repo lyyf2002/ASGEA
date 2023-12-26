@@ -1,0 +1,508 @@
+{
+    "nodes": [
+        {
+            "id": "9668_0",
+            "name": "Maurice Sendak_0",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "58_1",
+            "name": "United States_1",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "217_1",
+            "name": "Stephen Colbert_1",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "2388_1",
+            "name": "Where the Wild Things Are (film)_1",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "4154_1",
+            "name": "Brooklyn_1",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "5587_1",
+            "name": "Ridgefield, Connecticut_1",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "8782_1",
+            "name": "Danbury, Connecticut_1",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "9334_1",
+            "name": "Astrid Lindgren Memorial Award_1",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "9668_1",
+            "name": "Maurice Sendak_1",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "10521_1",
+            "name": "Herman Melville_1",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "4154_2",
+            "name": "Brooklyn_2",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "8782_2",
+            "name": "Danbury, Connecticut_2",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "9334_2",
+            "name": "Astrid Lindgren Memorial Award_2",
+            "class": 1,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "15926_2",
+            "name": "Stephen_Colbert_2",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "18672_2",
+            "name": "Herman_Melville_2",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "24510_2",
+            "name": "Ridgefield,_Connecticut_2",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "25458_2",
+            "name": "Where_the_Wild_Things_Are_(film)_2",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "25636_2",
+            "name": "Brooklyn_2",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "26830_2",
+            "name": "Danbury,_Connecticut_2",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "30302_2",
+            "name": "Astrid_Lindgren_Memorial_Award_2",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "14977_3",
+            "name": "United_States_3",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "18235_3",
+            "name": "Maurice_Sendak_3",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "25636_3",
+            "name": "Brooklyn_3",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "26830_3",
+            "name": "Danbury,_Connecticut_3",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "30302_3",
+            "name": "Astrid_Lindgren_Memorial_Award_3",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        },
+        {
+            "id": "18235_4",
+            "name": "Maurice_Sendak_4",
+            "class": 2,
+            "imgsrc": "None",
+            "content": "None"
+        }
+    ],
+    "edges": [
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Herman Melville_1",
+            "name": "influenced_by"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Brooklyn_1",
+            "name": "place_of_birth"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Danbury, Connecticut_1",
+            "name": "place_of_death"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "United States_1",
+            "name": "nationality"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Stephen Colbert_1",
+            "name": "influenced"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Brooklyn_1",
+            "name": "location"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Ridgefield, Connecticut_1",
+            "name": "location"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Astrid Lindgren Memorial Award_1",
+            "name": "award"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Where the Wild Things Are (film)_1",
+            "name": "film"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Where the Wild Things Are (film)_1",
+            "name": "film_story_credits"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Stephen Colbert_1",
+            "name": "influenced_by_reverse"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Astrid Lindgren Memorial Award_1",
+            "name": "award_winner_reverse"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Herman Melville_1",
+            "name": "influenced_reverse"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Brooklyn_1",
+            "name": "people_born_here_reverse"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Where the Wild Things Are (film)_1",
+            "name": "produced_by_reverse"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Where the Wild Things Are (film)_1",
+            "name": "story_by_reverse"
+        },
+        {
+            "source": "Maurice Sendak_0",
+            "target": "Maurice Sendak_1",
+            "name": "self_loop"
+        },
+        {
+            "source": "United States_1",
+            "target": "Brooklyn_2",
+            "name": "contains"
+        },
+        {
+            "source": "United States_1",
+            "target": "Danbury, Connecticut_2",
+            "name": "contains"
+        },
+        {
+            "source": "United States_1",
+            "target": "Brooklyn_2",
+            "name": "containedby_reverse"
+        },
+        {
+            "source": "United States_1",
+            "target": "Danbury, Connecticut_2",
+            "name": "containedby_reverse"
+        },
+        {
+            "source": "United States_1",
+            "target": "Brooklyn_2",
+            "name": "country_reverse"
+        },
+        {
+            "source": "Stephen Colbert_1",
+            "target": "Stephen_Colbert_2",
+            "name": "anchor"
+        },
+        {
+            "source": "Where the Wild Things Are (film)_1",
+            "target": "Where_the_Wild_Things_Are_(film)_2",
+            "name": "anchor"
+        },
+        {
+            "source": "Brooklyn_1",
+            "target": "Brooklyn_2",
+            "name": "self_loop"
+        },
+        {
+            "source": "Brooklyn_1",
+            "target": "Brooklyn_2",
+            "name": "anchor"
+        },
+        {
+            "source": "Ridgefield, Connecticut_1",
+            "target": "Ridgefield,_Connecticut_2",
+            "name": "anchor"
+        },
+        {
+            "source": "Danbury, Connecticut_1",
+            "target": "Danbury, Connecticut_2",
+            "name": "place"
+        },
+        {
+            "source": "Danbury, Connecticut_1",
+            "target": "Danbury, Connecticut_2",
+            "name": "place_reverse"
+        },
+        {
+            "source": "Danbury, Connecticut_1",
+            "target": "Danbury, Connecticut_2",
+            "name": "self_loop"
+        },
+        {
+            "source": "Danbury, Connecticut_1",
+            "target": "Danbury,_Connecticut_2",
+            "name": "anchor"
+        },
+        {
+            "source": "Astrid Lindgren Memorial Award_1",
+            "target": "Astrid Lindgren Memorial Award_2",
+            "name": "category_of"
+        },
+        {
+            "source": "Astrid Lindgren Memorial Award_1",
+            "target": "Astrid Lindgren Memorial Award_2",
+            "name": "category"
+        },
+        {
+            "source": "Astrid Lindgren Memorial Award_1",
+            "target": "Astrid Lindgren Memorial Award_2",
+            "name": "category_of_reverse"
+        },
+        {
+            "source": "Astrid Lindgren Memorial Award_1",
+            "target": "Astrid Lindgren Memorial Award_2",
+            "name": "category_reverse"
+        },
+        {
+            "source": "Astrid Lindgren Memorial Award_1",
+            "target": "Astrid Lindgren Memorial Award_2",
+            "name": "self_loop"
+        },
+        {
+            "source": "Astrid Lindgren Memorial Award_1",
+            "target": "Astrid_Lindgren_Memorial_Award_2",
+            "name": "anchor"
+        },
+        {
+            "source": "Maurice Sendak_1",
+            "target": "Brooklyn_2",
+            "name": "place_of_birth"
+        },
+        {
+            "source": "Maurice Sendak_1",
+            "target": "Danbury, Connecticut_2",
+            "name": "place_of_death"
+        },
+        {
+            "source": "Maurice Sendak_1",
+            "target": "Brooklyn_2",
+            "name": "location"
+        },
+        {
+            "source": "Maurice Sendak_1",
+            "target": "Astrid Lindgren Memorial Award_2",
+            "name": "award"
+        },
+        {
+            "source": "Maurice Sendak_1",
+            "target": "Astrid Lindgren Memorial Award_2",
+            "name": "award_winner_reverse"
+        },
+        {
+            "source": "Maurice Sendak_1",
+            "target": "Brooklyn_2",
+            "name": "people_born_here_reverse"
+        },
+        {
+            "source": "Herman Melville_1",
+            "target": "Herman_Melville_2",
+            "name": "anchor"
+        },
+        {
+            "source": "Brooklyn_2",
+            "target": "Brooklyn_3",
+            "name": "anchor"
+        },
+        {
+            "source": "Danbury, Connecticut_2",
+            "target": "Danbury,_Connecticut_3",
+            "name": "anchor"
+        },
+        {
+            "source": "Astrid Lindgren Memorial Award_2",
+            "target": "Astrid_Lindgren_Memorial_Award_3",
+            "name": "anchor"
+        },
+        {
+            "source": "Stephen_Colbert_2",
+            "target": "United_States_3",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Herman_Melville_2",
+            "target": "United_States_3",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Ridgefield,_Connecticut_2",
+            "target": "United_States_3",
+            "name": "isLocatedIn"
+        },
+        {
+            "source": "Where_the_Wild_Things_Are_(film)_2",
+            "target": "United_States_3",
+            "name": "isLocatedIn"
+        },
+        {
+            "source": "Brooklyn_2",
+            "target": "United_States_3",
+            "name": "isLocatedIn"
+        },
+        {
+            "source": "Brooklyn_2",
+            "target": "Maurice_Sendak_3",
+            "name": "wasBornIn_reverse"
+        },
+        {
+            "source": "Brooklyn_2",
+            "target": "Brooklyn_3",
+            "name": "self_loop"
+        },
+        {
+            "source": "Danbury,_Connecticut_2",
+            "target": "United_States_3",
+            "name": "isLocatedIn"
+        },
+        {
+            "source": "Danbury,_Connecticut_2",
+            "target": "Maurice_Sendak_3",
+            "name": "diedIn_reverse"
+        },
+        {
+            "source": "Danbury,_Connecticut_2",
+            "target": "Danbury,_Connecticut_3",
+            "name": "self_loop"
+        },
+        {
+            "source": "Astrid_Lindgren_Memorial_Award_2",
+            "target": "Maurice_Sendak_3",
+            "name": "hasWonPrize_reverse"
+        },
+        {
+            "source": "Astrid_Lindgren_Memorial_Award_2",
+            "target": "Astrid_Lindgren_Memorial_Award_3",
+            "name": "self_loop"
+        },
+        {
+            "source": "United_States_3",
+            "target": "Maurice_Sendak_4",
+            "name": "isCitizenOf_reverse"
+        },
+        {
+            "source": "Maurice_Sendak_3",
+            "target": "Maurice_Sendak_4",
+            "name": "self_loop"
+        },
+        {
+            "source": "Brooklyn_3",
+            "target": "Maurice_Sendak_4",
+            "name": "wasBornIn_reverse"
+        },
+        {
+            "source": "Danbury,_Connecticut_3",
+            "target": "Maurice_Sendak_4",
+            "name": "diedIn_reverse"
+        },
+        {
+            "source": "Astrid_Lindgren_Memorial_Award_3",
+            "target": "Maurice_Sendak_4",
+            "name": "hasWonPrize_reverse"
+        }
+    ]
+}

@@ -1,0 +1,87 @@
+{
+    "nodes": [
+        {
+            "id": 14977,
+            "name": "United_States"
+        },
+        {
+            "id": 15152,
+            "name": "France"
+        },
+        {
+            "id": 15166,
+            "name": "Germany"
+        },
+        {
+            "id": 15265,
+            "name": "Scotland"
+        },
+        {
+            "id": 15537,
+            "name": "Elvis_Presley"
+        },
+        {
+            "id": 26404,
+            "name": "Memphis,_Tennessee"
+        },
+        {
+            "id": 27099,
+            "name": "Tupelo,_Mississippi"
+        },
+        {
+            "id": 28002,
+            "name": "Grammy_Award"
+        },
+        {
+            "id": 30166,
+            "name": "Grammy_Lifetime_Achievement_Award"
+        }
+    ],
+    "edges": [
+        {
+            "source": "Elvis_Presley",
+            "target": "United_States",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Elvis_Presley",
+            "target": "Germany",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Elvis_Presley",
+            "target": "France",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Elvis_Presley",
+            "target": "Scotland",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Elvis_Presley",
+            "target": "Tupelo,_Mississippi",
+            "name": "wasBornIn"
+        },
+        {
+            "source": "Elvis_Presley",
+            "target": "Memphis,_Tennessee",
+            "name": "diedIn"
+        },
+        {
+            "source": "Elvis_Presley",
+            "target": "Grammy_Lifetime_Achievement_Award",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Elvis_Presley",
+            "target": "Grammy_Award",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Elvis_Presley",
+            "target": "Elvis_Presley",
+            "name": "self_loop"
+        }
+    ]
+}

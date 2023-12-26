@@ -1,0 +1,69 @@
+{
+    "nodes": [
+        {
+            "id": 14977,
+            "name": "United_States"
+        },
+        {
+            "id": 15139,
+            "name": "Los_Angeles"
+        },
+        {
+            "id": 15201,
+            "name": "Italy"
+        },
+        {
+            "id": 16322,
+            "name": "Lebanon"
+        },
+        {
+            "id": 17001,
+            "name": "Joseph_Barbera"
+        },
+        {
+            "id": 24367,
+            "name": "Manhattan"
+        },
+        {
+            "id": 30177,
+            "name": "Emmy_Award"
+        }
+    ],
+    "edges": [
+        {
+            "source": "Joseph_Barbera",
+            "target": "Italy",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Joseph_Barbera",
+            "target": "Lebanon",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Joseph_Barbera",
+            "target": "United_States",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Joseph_Barbera",
+            "target": "Manhattan",
+            "name": "wasBornIn"
+        },
+        {
+            "source": "Joseph_Barbera",
+            "target": "Los_Angeles",
+            "name": "diedIn"
+        },
+        {
+            "source": "Joseph_Barbera",
+            "target": "Emmy_Award",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Joseph_Barbera",
+            "target": "Joseph_Barbera",
+            "name": "self_loop"
+        }
+    ]
+}

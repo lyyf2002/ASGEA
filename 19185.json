@@ -1,0 +1,60 @@
+{
+    "nodes": [
+        {
+            "id": 14977,
+            "name": "United_States"
+        },
+        {
+            "id": 15073,
+            "name": "New_York_City"
+        },
+        {
+            "id": 19185,
+            "name": "Adolph_Green"
+        },
+        {
+            "id": 25280,
+            "name": "The_Bronx"
+        },
+        {
+            "id": 28002,
+            "name": "Grammy_Award"
+        },
+        {
+            "id": 28861,
+            "name": "Tony_Award"
+        }
+    ],
+    "edges": [
+        {
+            "source": "Adolph_Green",
+            "target": "United_States",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Adolph_Green",
+            "target": "The_Bronx",
+            "name": "wasBornIn"
+        },
+        {
+            "source": "Adolph_Green",
+            "target": "New_York_City",
+            "name": "diedIn"
+        },
+        {
+            "source": "Adolph_Green",
+            "target": "Tony_Award",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Adolph_Green",
+            "target": "Grammy_Award",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Adolph_Green",
+            "target": "Adolph_Green",
+            "name": "self_loop"
+        }
+    ]
+}

@@ -1,0 +1,429 @@
+{
+    "nodes": [
+        {
+            "id": 58,
+            "name": "United States"
+        },
+        {
+            "id": 214,
+            "name": "/m/05zppz"
+        },
+        {
+            "id": 217,
+            "name": "Stephen Colbert"
+        },
+        {
+            "id": 338,
+            "name": "Film producer"
+        },
+        {
+            "id": 391,
+            "name": "Writer"
+        },
+        {
+            "id": 860,
+            "name": "Illustrator"
+        },
+        {
+            "id": 1302,
+            "name": "Artist"
+        },
+        {
+            "id": 1462,
+            "name": "Television producer"
+        },
+        {
+            "id": 1474,
+            "name": "Jews"
+        },
+        {
+            "id": 1612,
+            "name": "Stroke"
+        },
+        {
+            "id": 1927,
+            "name": "Author"
+        },
+        {
+            "id": 2388,
+            "name": "Where the Wild Things Are (film)"
+        },
+        {
+            "id": 2731,
+            "name": "Domestic partnership"
+        },
+        {
+            "id": 3549,
+            "name": "/m/02pjxr"
+        },
+        {
+            "id": 3800,
+            "name": "William Blake"
+        },
+        {
+            "id": 3914,
+            "name": "/m/067pl7"
+        },
+        {
+            "id": 3916,
+            "name": "Atheism"
+        },
+        {
+            "id": 4154,
+            "name": "Brooklyn"
+        },
+        {
+            "id": 4734,
+            "name": "Daytime Emmy Award for Outstanding Children&#039;s Animated Program"
+        },
+        {
+            "id": 5265,
+            "name": "Caldecott Medal"
+        },
+        {
+            "id": 5372,
+            "name": "/m/03hfwhq"
+        },
+        {
+            "id": 5587,
+            "name": "Ridgefield, Connecticut"
+        },
+        {
+            "id": 6066,
+            "name": "Wolfgang Amadeus Mozart"
+        },
+        {
+            "id": 7189,
+            "name": "Patrick Loubert"
+        },
+        {
+            "id": 7238,
+            "name": "Art Students League of New York"
+        },
+        {
+            "id": 7611,
+            "name": "Judaism"
+        },
+        {
+            "id": 8782,
+            "name": "Danbury, Connecticut"
+        },
+        {
+            "id": 9334,
+            "name": "Astrid Lindgren Memorial Award"
+        },
+        {
+            "id": 9668,
+            "name": "Maurice Sendak"
+        },
+        {
+            "id": 10521,
+            "name": "Herman Melville"
+        },
+        {
+            "id": 12475,
+            "name": "Clive A. Smith"
+        },
+        {
+            "id": 23121,
+            "name": "Maurice Sendak"
+        }
+    ],
+    "edges": [
+        {
+            "source": "Maurice Sendak",
+            "target": "Where the Wild Things Are (film)",
+            "name": "film_story_credits"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Film producer",
+            "name": "profession"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Ridgefield, Connecticut",
+            "name": "location"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Artist",
+            "name": "profession"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Brooklyn",
+            "name": "location"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Herman Melville",
+            "name": "influenced_by"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "/m/05zppz",
+            "name": "gender"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Atheism",
+            "name": "religion"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Stephen Colbert",
+            "name": "influenced"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Writer",
+            "name": "profession"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Jews",
+            "name": "ethnicity"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Where the Wild Things Are (film)",
+            "name": "film"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Author",
+            "name": "profession"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "/m/03hfwhq",
+            "name": "award"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Clive A. Smith",
+            "name": "award_nominee"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "United States",
+            "name": "nationality"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Brooklyn",
+            "name": "place_of_birth"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Judaism",
+            "name": "religion"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Stroke",
+            "name": "cause_of_death"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Art Students League of New York",
+            "name": "institution"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "/m/02pjxr",
+            "name": "profession"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Wolfgang Amadeus Mozart",
+            "name": "influenced_by"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "William Blake",
+            "name": "influenced_by"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Danbury, Connecticut",
+            "name": "place_of_death"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "/m/067pl7",
+            "name": "award_nominee"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Astrid Lindgren Memorial Award",
+            "name": "award"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Daytime Emmy Award for Outstanding Children&#039;s Animated Program",
+            "name": "award"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Television producer",
+            "name": "profession"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Caldecott Medal",
+            "name": "award"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Domestic partnership",
+            "name": "type_of_union"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Illustrator",
+            "name": "profession"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Patrick Loubert",
+            "name": "award_nominee"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "/m/03hfwhq",
+            "name": "award_winner_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Herman Melville",
+            "name": "influenced_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Where the Wild Things Are (film)",
+            "name": "story_by_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Where the Wild Things Are (film)",
+            "name": "produced_by_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Film producer",
+            "name": "people_with_this_profession_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Clive A. Smith",
+            "name": "award_nominee_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Art Students League of New York",
+            "name": "student_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Illustrator",
+            "name": "people_with_this_profession_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "/m/02pjxr",
+            "name": "people_with_this_profession_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Writer",
+            "name": "people_with_this_profession_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Astrid Lindgren Memorial Award",
+            "name": "award_winner_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Stroke",
+            "name": "people_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Wolfgang Amadeus Mozart",
+            "name": "influenced_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "William Blake",
+            "name": "influenced_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Brooklyn",
+            "name": "people_born_here_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Stephen Colbert",
+            "name": "influenced_by_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Patrick Loubert",
+            "name": "award_nominee_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Caldecott Medal",
+            "name": "award_winner_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "/m/067pl7",
+            "name": "award_nominee_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Daytime Emmy Award for Outstanding Children&#039;s Animated Program",
+            "name": "award_nominee_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Author",
+            "name": "people_with_this_profession_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Artist",
+            "name": "people_with_this_profession_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Television producer",
+            "name": "people_with_this_profession_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Jews",
+            "name": "people_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Domestic partnership",
+            "name": "spouse_reverse"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Maurice Sendak",
+            "name": "anchor"
+        },
+        {
+            "source": "Maurice Sendak",
+            "target": "Maurice Sendak",
+            "name": "self_loop"
+        }
+    ]
+}

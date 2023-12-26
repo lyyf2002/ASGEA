@@ -1,0 +1,51 @@
+{
+    "nodes": [
+        {
+            "id": 15326,
+            "name": "India"
+        },
+        {
+            "id": 15842,
+            "name": "R._D._Burman"
+        },
+        {
+            "id": 24389,
+            "name": "Kolkata"
+        },
+        {
+            "id": 25604,
+            "name": "Mumbai"
+        },
+        {
+            "id": 30168,
+            "name": "Filmfare_Awards"
+        }
+    ],
+    "edges": [
+        {
+            "source": "R._D._Burman",
+            "target": "India",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "R._D._Burman",
+            "target": "Kolkata",
+            "name": "wasBornIn"
+        },
+        {
+            "source": "R._D._Burman",
+            "target": "Mumbai",
+            "name": "diedIn"
+        },
+        {
+            "source": "R._D._Burman",
+            "target": "Filmfare_Awards",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "R._D._Burman",
+            "target": "R._D._Burman",
+            "name": "self_loop"
+        }
+    ]
+}

@@ -11,11 +11,11 @@ import time
 from collections import OrderedDict
 import networkx as nx
 import matplotlib.pyplot as plt
-
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser(description="Parser for MASEA")
 parser.add_argument("--data_path", default="../data/mmkg", type=str, help="Experiment path")
-parser.add_argument("--data_choice", default="FBDB15K", type=str, choices=["DBP15K", "DWY", "FBYG15K", "FBDB15K"],
+parser.add_argument("--data_choice", default="FBYG15K", type=str, choices=["DBP15K", "DWY", "FBYG15K", "FBDB15K"],
                     help="Experiment path")
 parser.add_argument("--data_split", default="norm", type=str, help="Experiment split",
                     choices=["dbp_wd_15k_V2", "dbp_wd_15k_V1", "zh_en", "ja_en", "fr_en", "norm"])
@@ -222,62 +222,179 @@ if __name__ == '__main__':
     n_data = loader.n_test
     n_batch = n_data // batch_size + (n_data % batch_size > 0)
 
-    for i in range(n_batch):
-        start = i*batch_size
-        end = min(n_data, (i+1)*batch_size)
-        batch_idx = np.arange(start, end)
-        triple = loader.get_batch(batch_idx, data='test')
-        subs, rels, objs = triple[:,0],triple[:,1],triple[:,2]
-        sub = subs[0]
-        rel = rels[0]   
-        obj = objs[0]
-        edges = loader.get_vis_subgraph(sub, obj, 5)
-        all_edges_size = sum([len(edge) for edge in edges])
-        print(all_edges_size)
-        if all_edges_size >100 or all_edges_size == 0:
-            continue
-        pos = {}
-        x_pos = [-5,-3, -1, 1, 3, 5]
-        g = {'nodes': [], 'edges': []}
-        G = nx.DiGraph()
-        for node in edges[0][:,0].unique():
-            G.add_node(str(node.item()) + '_' + str(0), desc=id2name[node.item()] + '_' + str(0), layer=0)
-            g['nodes'].append({'id': str(node.item()) + '_' + str(0), 'name': id2name[node.item()] + '_' + str(0),"class": 1 if node.item() < left_entity else 2 ,"imgsrc": "None","content": "None"} )
-            pos[str(node.item()) + '_' + str(0)] = (x_pos[0], 0)
-        for idx, edge in enumerate(edges):
-            # node_1 = edge[:,0].unique()
-            node_2 = edge[:,2].unique()
-            size = len(node_2)
 
-            for y, node in enumerate(node_2):
-                G.add_node(str(node.item())+'_'+str(idx+1), desc=id2name[node.item()]+'_'+str(idx+1),layer=idx+1)
-                g['nodes'].append({'id': str(node.item())+'_'+str(idx+1), 'name': id2name[node.item()]+'_'+str(idx+1),"class": 1 if node.item() < left_entity else 2,"imgsrc": "None","content": "None"} )
-                pos[str(node.item())+'_'+str(idx+1)] = (x_pos[idx+1], 10/(size+1) * (y+1) - 5)
-            for e in edge:
-                g['edges'].append({'source': str(e[0].item())+'_'+str(idx), 'target': str(e[2].item())+'_'+str(idx+1), 'name': id2rel[e[1].item()]} )
-                G.add_edge(str(e[0].item())+'_'+str(idx), str(e[2].item())+'_'+str(idx+1), name=id2rel[e[1].item()])
+###################
+    # find entity like 18235
+
+    # target = 18235
+    # target_nei = loader.get_vis_nei(target, 1)
+    # target_rels = target_nei[:,1].unique()
+    # target_rels = target_rels.cpu().numpy()
+    # for i in tqdm(range(left_entity,loader.n_ent)):
+    #     if i ==18235:
+    #         continue
+    #     i_nei = loader.get_vis_nei(i,1)
+    #     i_rels = i_nei[:,1].unique().cpu().numpy()
+    #     if np.all(np.isin(target_rels, i_rels)) and np.all(np.isin(i_rels, target_rels)):
+    #         g = {'nodes': [], 'edges': []}
+    #         G = nx.DiGraph()
+    #         nodes = torch.cat([i_nei[:,0], i_nei[:,2]]).unique()
+    #         for node in nodes:
+    #             G.add_node(node.item(), desc=id2name[node.item()])
+    #             g['nodes'].append({'id': node.item(), 'name': id2name[node.item()]})
+    #         for edge in i_nei:
+    #             G.add_edge(edge[0].item(), edge[2].item(), name=id2rel[edge[1].item()])
+    #             g['edges'].append({'source': id2name[edge[0].item()], 'target': id2name[edge[2].item()], 'name': id2rel[edge[1].item()]})
+    #         pos = nx.spring_layout(G)
+    #         nx.draw(G, pos)
+    #         # nx.draw_networkx_nodes(G, pos=pos, nodelist=[str(sub.item()) + '_' + str(0),str(obj.item()) + '_' + str(5)], node_color='red', node_size=1000)
+    #         node_labels = nx.get_node_attributes(G, 'desc')
+    #         nx.draw_networkx_labels(G, pos, labels=node_labels)
+    #         edge_labels = nx.get_edge_attributes(G, 'name')
+    #         nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+    #         plt.savefig(f'{i}.png', dpi=100)
+    #         plt.close()
+    #         json.dump(g, open(f'{i}.json', 'w', encoding='utf-8'), indent=4)
+    #         print(i)
+
+#################
+    # case study for 9668 18235
+    # sub = 18235
+    # # obj = 18235
+    # sub_nei = loader.get_vis_nei(sub, 1)
+    # print(sub_nei)
+    # g = {'nodes': [], 'edges': []}
+    # G = nx.DiGraph()
+    # nodes = torch.cat([sub_nei[:,0], sub_nei[:,2]]).unique()
+    # for node in nodes:
+    #     G.add_node(node.item(), desc=id2name[node.item()])
+    #     g['nodes'].append({'id': node.item(), 'name': id2name[node.item()]})
+    # for edge in sub_nei:
+    #     G.add_edge(edge[0].item(), edge[2].item(), name=id2rel[edge[1].item()])
+    #     g['edges'].append({'source': id2name[edge[0].item()], 'target': id2name[edge[2].item()], 'name': id2rel[edge[1].item()]})
+    # pos = nx.spring_layout(G)
+    # nx.draw(G, pos)
+    # # nx.draw_networkx_nodes(G, pos=pos, nodelist=[str(sub.item()) + '_' + str(0),str(obj.item()) + '_' + str(5)], node_color='red', node_size=1000)
+    # node_labels = nx.get_node_attributes(G, 'desc')
+    # nx.draw_networkx_labels(G, pos, labels=node_labels)
+    # edge_labels = nx.get_edge_attributes(G, 'name')
+    # nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+    # plt.savefig(f'{sub}.png', dpi=100)
+    # plt.close()
+    # json.dump(g, open(f'{sub}.json', 'w', encoding='utf-8'), indent=4)
+
+####################
+    # get subgraph in 9668 and 18235
+    sub = 9668
+    obj = 18235
+    edges = loader.get_vis_subgraph(sub, obj, 4)
+    all_edges_size = sum([len(edge) for edge in edges])
+    print(all_edges_size)
+    pos = {}
+    x_pos = [-5,-3, -1, 1, 3, 5]
+    g = {'nodes': [], 'edges': []}
+    G = nx.DiGraph()
+    for node in edges[0][:,0].unique():
+        G.add_node(str(node.item()) + '_' + str(0), desc=id2name[node.item()] + '_' + str(0), layer=0)
+        g['nodes'].append({'id': str(node.item()) + '_' + str(0), 'name': id2name[node.item()] + '_' + str(0),"class": 1 if node.item() < left_entity else 2 ,"imgsrc": "None","content": "None"} )
+        pos[str(node.item()) + '_' + str(0)] = (x_pos[0], 0)
+    for idx, edge in enumerate(edges):
+        # node_1 = edge[:,0].unique()
+        node_2 = edge[:,2].unique()
+        size = len(node_2)
+
+        for y, node in enumerate(node_2):
+            G.add_node(str(node.item())+'_'+str(idx+1), desc=id2name[node.item()]+'_'+str(idx+1),layer=idx+1)
+            g['nodes'].append({'id': str(node.item())+'_'+str(idx+1), 'name': id2name[node.item()]+'_'+str(idx+1),"class": 1 if node.item() < left_entity else 2,"imgsrc": "None","content": "None"} )
+            pos[str(node.item())+'_'+str(idx+1)] = (x_pos[idx+1], 10/(size+1) * (y+1) - 5)
+        for e in edge:
+            g['edges'].append({'source': str(id2name[e[0].item()])+'_'+str(idx), 'target': str(id2name[e[2].item()])+'_'+str(idx+1), 'name': id2rel[e[1].item()]} )
+            G.add_edge(str(e[0].item())+'_'+str(idx), str(e[2].item())+'_'+str(idx+1), name=id2rel[e[1].item()])
 
 
-        # nodes = torch.cat([edges[:,0], edges[:,2]]).unique()
-        # for node in nodes:
-        #     G.add_node(node.item(), desc=id2name[node.item()])
-        # for edge in edges:
-        #     G.add_edge(edge[0].item(), edge[2].item(), name=id2rel[edge[1].item()])
+    # nodes = torch.cat([edges[:,0], edges[:,2]]).unique()
+    # for node in nodes:
+    #     G.add_node(node.item(), desc=id2name[node.item()])
+    # for edge in edges:
+    #     G.add_edge(edge[0].item(), edge[2].item(), name=id2rel[edge[1].item()])
 
-        # draw graph with labels
-        plt.figure(figsize=(16, 16), dpi=80)
-        # pos = nx.kamada_kawai_layout(G)
-        pos = nx.spring_layout(G)
-        nx.draw(G, pos)
-        nx.draw_networkx_nodes(G, pos=pos, nodelist=[str(sub.item()) + '_' + str(0),str(obj.item()) + '_' + str(5)], node_color='red', node_size=1000)
-        node_labels = nx.get_node_attributes(G, 'desc')
-        nx.draw_networkx_labels(G, pos, labels=node_labels)
-        edge_labels = nx.get_edge_attributes(G, 'name')
-        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+    # draw graph with labels
+    plt.figure(figsize=(16, 16), dpi=80)
+    # pos = nx.kamada_kawai_layout(G)
+    pos = nx.spring_layout(G)
+    nx.draw(G, pos)
+    node_labels = nx.get_node_attributes(G, 'desc')
+    nx.draw_networkx_labels(G, pos, labels=node_labels)
+    edge_labels = nx.get_edge_attributes(G, 'name')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
 
-        plt.savefig(f'FBDB_{sub}_{rel}_{obj}.png', dpi=100)
-        plt.close()
-        json.dump(g, open(f'FBDB_{sub}_{rel}_{obj}.json', 'w',encoding='utf-8'), indent=4)
+    plt.savefig(f'FBYG_{sub}_{obj}_4.png', dpi=100)
+    plt.close()
+    json.dump(g, open(f'FBYG_{sub}_{obj}_4.json', 'w',encoding='utf-8'), indent=4)
+
+
+
+
+
+
+#######################
+    # get all subgraph in 100 edges
+    # for i in range(n_batch):
+    #     start = i*batch_size
+    #     end = min(n_data, (i+1)*batch_size)
+    #     batch_idx = np.arange(start, end)
+    #     triple = loader.get_batch(batch_idx, data='test')
+    #     subs, rels, objs = triple[:,0],triple[:,1],triple[:,2]
+    #     sub = subs[0]
+    #     rel = rels[0]
+    #     obj = objs[0]
+    #     edges = loader.get_vis_subgraph(sub, obj, 5)
+    #     all_edges_size = sum([len(edge) for edge in edges])
+    #     print(all_edges_size)
+    #     if all_edges_size >100 or all_edges_size == 0:
+    #         continue
+    #     pos = {}
+    #     x_pos = [-5,-3, -1, 1, 3, 5]
+    #     g = {'nodes': [], 'edges': []}
+    #     G = nx.DiGraph()
+    #     for node in edges[0][:,0].unique():
+    #         G.add_node(str(node.item()) + '_' + str(0), desc=id2name[node.item()] + '_' + str(0), layer=0)
+    #         g['nodes'].append({'id': str(node.item()) + '_' + str(0), 'name': id2name[node.item()] + '_' + str(0),"class": 1 if node.item() < left_entity else 2 ,"imgsrc": "None","content": "None"} )
+    #         pos[str(node.item()) + '_' + str(0)] = (x_pos[0], 0)
+    #     for idx, edge in enumerate(edges):
+    #         # node_1 = edge[:,0].unique()
+    #         node_2 = edge[:,2].unique()
+    #         size = len(node_2)
+    #
+    #         for y, node in enumerate(node_2):
+    #             G.add_node(str(node.item())+'_'+str(idx+1), desc=id2name[node.item()]+'_'+str(idx+1),layer=idx+1)
+    #             g['nodes'].append({'id': str(node.item())+'_'+str(idx+1), 'name': id2name[node.item()]+'_'+str(idx+1),"class": 1 if node.item() < left_entity else 2,"imgsrc": "None","content": "None"} )
+    #             pos[str(node.item())+'_'+str(idx+1)] = (x_pos[idx+1], 10/(size+1) * (y+1) - 5)
+    #         for e in edge:
+    #             g['edges'].append({'source': str(e[0].item())+'_'+str(idx), 'target': str(e[2].item())+'_'+str(idx+1), 'name': id2rel[e[1].item()]} )
+    #             G.add_edge(str(e[0].item())+'_'+str(idx), str(e[2].item())+'_'+str(idx+1), name=id2rel[e[1].item()])
+    #
+    #
+    #     # nodes = torch.cat([edges[:,0], edges[:,2]]).unique()
+    #     # for node in nodes:
+    #     #     G.add_node(node.item(), desc=id2name[node.item()])
+    #     # for edge in edges:
+    #     #     G.add_edge(edge[0].item(), edge[2].item(), name=id2rel[edge[1].item()])
+    #
+    #     # draw graph with labels
+    #     plt.figure(figsize=(16, 16), dpi=80)
+    #     # pos = nx.kamada_kawai_layout(G)
+    #     pos = nx.spring_layout(G)
+    #     nx.draw(G, pos)
+    #     nx.draw_networkx_nodes(G, pos=pos, nodelist=[str(sub.item()) + '_' + str(0),str(obj.item()) + '_' + str(5)], node_color='red', node_size=1000)
+    #     node_labels = nx.get_node_attributes(G, 'desc')
+    #     nx.draw_networkx_labels(G, pos, labels=node_labels)
+    #     edge_labels = nx.get_edge_attributes(G, 'name')
+    #     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+    #
+    #     plt.savefig(f'FBDB_{sub}_{rel}_{obj}.png', dpi=100)
+    #     plt.close()
+    #     json.dump(g, open(f'FBDB_{sub}_{rel}_{obj}.json', 'w',encoding='utf-8'), indent=4)
 
 
 

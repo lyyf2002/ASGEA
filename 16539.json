@@ -1,0 +1,69 @@
+{
+    "nodes": [
+        {
+            "id": 14977,
+            "name": "United_States"
+        },
+        {
+            "id": 15398,
+            "name": "Russia"
+        },
+        {
+            "id": 16539,
+            "name": "Sidney_Sheldon"
+        },
+        {
+            "id": 23803,
+            "name": "Chicago"
+        },
+        {
+            "id": 26192,
+            "name": "Rancho_Mirage,_California"
+        },
+        {
+            "id": 28861,
+            "name": "Tony_Award"
+        },
+        {
+            "id": 29852,
+            "name": "Academy_Award_for_Best_Original_Screenplay"
+        }
+    ],
+    "edges": [
+        {
+            "source": "Sidney_Sheldon",
+            "target": "Russia",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Sidney_Sheldon",
+            "target": "United_States",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Sidney_Sheldon",
+            "target": "Chicago",
+            "name": "wasBornIn"
+        },
+        {
+            "source": "Sidney_Sheldon",
+            "target": "Rancho_Mirage,_California",
+            "name": "diedIn"
+        },
+        {
+            "source": "Sidney_Sheldon",
+            "target": "Academy_Award_for_Best_Original_Screenplay",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Sidney_Sheldon",
+            "target": "Tony_Award",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Sidney_Sheldon",
+            "target": "Sidney_Sheldon",
+            "name": "self_loop"
+        }
+    ]
+}

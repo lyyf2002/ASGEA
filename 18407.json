@@ -1,0 +1,69 @@
+{
+    "nodes": [
+        {
+            "id": 14977,
+            "name": "United_States"
+        },
+        {
+            "id": 15139,
+            "name": "Los_Angeles"
+        },
+        {
+            "id": 18407,
+            "name": "Danny_Kaye"
+        },
+        {
+            "id": 25636,
+            "name": "Brooklyn"
+        },
+        {
+            "id": 30177,
+            "name": "Emmy_Award"
+        },
+        {
+            "id": 30192,
+            "name": "Peabody_Award"
+        },
+        {
+            "id": 30218,
+            "name": "Jean_Hersholt_Humanitarian_Award"
+        }
+    ],
+    "edges": [
+        {
+            "source": "Danny_Kaye",
+            "target": "United_States",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Danny_Kaye",
+            "target": "Brooklyn",
+            "name": "wasBornIn"
+        },
+        {
+            "source": "Danny_Kaye",
+            "target": "Los_Angeles",
+            "name": "diedIn"
+        },
+        {
+            "source": "Danny_Kaye",
+            "target": "Emmy_Award",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Danny_Kaye",
+            "target": "Jean_Hersholt_Humanitarian_Award",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Danny_Kaye",
+            "target": "Peabody_Award",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Danny_Kaye",
+            "target": "Danny_Kaye",
+            "name": "self_loop"
+        }
+    ]
+}

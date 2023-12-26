@@ -1,0 +1,78 @@
+{
+    "nodes": [
+        {
+            "id": 14977,
+            "name": "United_States"
+        },
+        {
+            "id": 14992,
+            "name": "South_Africa"
+        },
+        {
+            "id": 15032,
+            "name": "United_Kingdom"
+        },
+        {
+            "id": 15073,
+            "name": "New_York_City"
+        },
+        {
+            "id": 15274,
+            "name": "England"
+        },
+        {
+            "id": 15562,
+            "name": "Basil_Rathbone"
+        },
+        {
+            "id": 24018,
+            "name": "Johannesburg"
+        },
+        {
+            "id": 28861,
+            "name": "Tony_Award"
+        }
+    ],
+    "edges": [
+        {
+            "source": "Basil_Rathbone",
+            "target": "United_States",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Basil_Rathbone",
+            "target": "England",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Basil_Rathbone",
+            "target": "United_Kingdom",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Basil_Rathbone",
+            "target": "South_Africa",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Basil_Rathbone",
+            "target": "Johannesburg",
+            "name": "wasBornIn"
+        },
+        {
+            "source": "Basil_Rathbone",
+            "target": "New_York_City",
+            "name": "diedIn"
+        },
+        {
+            "source": "Basil_Rathbone",
+            "target": "Tony_Award",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Basil_Rathbone",
+            "target": "Basil_Rathbone",
+            "name": "self_loop"
+        }
+    ]
+}

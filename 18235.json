@@ -1,0 +1,69 @@
+{
+    "nodes": [
+        {
+            "id": 14977,
+            "name": "United_States"
+        },
+        {
+            "id": 15248,
+            "name": "Poland"
+        },
+        {
+            "id": 18235,
+            "name": "Maurice_Sendak"
+        },
+        {
+            "id": 25636,
+            "name": "Brooklyn"
+        },
+        {
+            "id": 26830,
+            "name": "Danbury,_Connecticut"
+        },
+        {
+            "id": 30257,
+            "name": "Caldecott_Medal"
+        },
+        {
+            "id": 30302,
+            "name": "Astrid_Lindgren_Memorial_Award"
+        }
+    ],
+    "edges": [
+        {
+            "source": "Maurice_Sendak",
+            "target": "Poland",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Maurice_Sendak",
+            "target": "United_States",
+            "name": "isCitizenOf"
+        },
+        {
+            "source": "Maurice_Sendak",
+            "target": "Brooklyn",
+            "name": "wasBornIn"
+        },
+        {
+            "source": "Maurice_Sendak",
+            "target": "Danbury,_Connecticut",
+            "name": "diedIn"
+        },
+        {
+            "source": "Maurice_Sendak",
+            "target": "Caldecott_Medal",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Maurice_Sendak",
+            "target": "Astrid_Lindgren_Memorial_Award",
+            "name": "hasWonPrize"
+        },
+        {
+            "source": "Maurice_Sendak",
+            "target": "Maurice_Sendak",
+            "name": "self_loop"
+        }
+    ]
+}
