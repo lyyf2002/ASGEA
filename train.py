@@ -11,10 +11,10 @@ from collections import OrderedDict
 
 parser = argparse.ArgumentParser(description="Parser for MASEA")
 parser.add_argument("--data_path", default="../data/mmkg", type=str, help="Experiment path")
-parser.add_argument("--data_choice", default="DBP15K", type=str, choices=["DBP15K", "DWY", "FBYG15K", "FBDB15K"],
+parser.add_argument("--data_choice", default="DBP15K", type=str, choices=["DBP15K", "DWY", "FBYG15K", "FBDB15K","OpenEA"],
                     help="Experiment path")
 parser.add_argument("--data_split", default="zh_en", type=str, help="Experiment split",
-                    choices=["dbp_wd_15k_V2", "dbp_wd_15k_V1", "zh_en", "ja_en", "fr_en", "norm"])
+                    choices=["dbp_wd_15k_V2", "dbp_wd_15k_V1", "zh_en", "ja_en", "fr_en", "norm","OEA_D_W_15K_V1", "OEA_D_W_15K_V2", "OEA_EN_DE_15K_V1", "OEA_EN_FR_15K_V1"])
 parser.add_argument("--data_rate", type=float, default=0.3, choices=[0.2, 0.3, 0.5, 0.8], help="training set rate")
 parser.add_argument('--seed', type=str, default=1234)
 parser.add_argument('--gpu', type=int, default=0)
@@ -36,7 +36,7 @@ parser.add_argument("--MLP_dropout", type=float, default=0.2)
 
 parser.add_argument("--n_ent", type=int, default=0)
 parser.add_argument("--n_rel", type=int, default=0)
-parser.add_argument("--topk", type=int,default=500)
+parser.add_argument("--topk", type=int,default=0)
 parser.add_argument("--stru_dim", type=int, default=16)
 parser.add_argument("--text_dim", type=int, default=768)
 parser.add_argument("--img_dim", type=int, default=2048)

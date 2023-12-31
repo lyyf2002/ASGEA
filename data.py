@@ -62,19 +62,17 @@ def load_eva_data(args):
     left_ents,left_id2name = get_ids(e1,file_dir)
     right_ents,right_id2name = get_ids(e2,file_dir)
     id2name = {**left_id2name, **right_id2name}
-    if not args.data_choice == "DBP15K":
+    if not args.data_choice == "DBP15K" and not args.data_choice == "OpenEA":
         id2rel = get_id2rel(os.path.join(file_dir, 'id2relation.txt'))
+    elif args.data_choice == "OpenEA":
+        id2rel = get_id2rel(os.path.join(file_dir, 'rel_ids'))
     else:
         id2rel = None
     ENT_NUM = len(ent2id_dict)
     REL_NUM = len(r_hs)
     np.random.shuffle(ills)
-    if "V1" in file_dir:
-        split = "norm"
-        img_vec_path = osp.join(args.data_path, f"OpenEA/pkl/{args.data_choice}_id_img_feature_dict.pkl")
-    elif "V2" in file_dir:
-        split = "dense"
-        img_vec_path = osp.join(args.data_path, f"OpenEA/pkl/{args.data_choice}_id_img_feature_dict.pkl")
+    if args.data_choice == "OpenEA":
+        img_vec_path = osp.join(args.data_path, f"OpenEA/pkl/{args.data_split}_id_img_feature_dict.pkl")
     elif "FB" in file_dir:
         img_vec_path = osp.join(args.data_path, f"pkls/{args.data_choice}_id_img_feature_dict.pkl")
     else:
@@ -132,10 +130,10 @@ def load_eva_data(args):
 
     rel_features = load_relation(ENT_NUM, triples, 1000)
     print(f"relation feature shape:{rel_features.shape}")
-    if 'OEA' in args.data_choice:
+    if 'OpenEA' in args.data_choice:
         a1 = os.path.join(file_dir, f'attr_triples_1')
         a2 = os.path.join(file_dir, f'attr_triples_2')
-        att_features, num_att_left, num_att_right = load_attr_withNums(['dbp', 'dbp'], [a1, a2], ent2id_dict, file_dir,
+        att_features, num_att_left, num_att_right = load_attr_withNums(['oea', 'oea'], [a1, a2], ent2id_dict, file_dir,
                                                                        topk=args.topk)
     elif 'FB' in args.data_choice:
         a1 = os.path.join(file_dir, 'FB15K_NumericalTriples.txt')
@@ -451,10 +449,12 @@ def dbp_value(s):
         s = s.split("^^")[0]
         if ('<' == s[0] and '>' == s[-1]) or ('\"' == s[0] and '\"' == s[-1]):
             s = s[1:-1]
-    elif '@' in s:
+    elif '@' in s and s.index('@')>0:
         s = s.split('@')[0]
         if ('<' == s[0] and '>' == s[-1]) or ('\"' == s[0] and '\"' == s[-1]):
             s = s[1:-1]
+        if s[-1]=='\"':
+            s = s[:-1]
     else:
         if ('<' == s[0] and '>' == s[-1]) or ('\"' == s[0] and '\"' == s[-1]):
             s = s[1:-1]
@@ -609,7 +609,9 @@ def load_attr_withNum(data, fn, ent2id):
     elif data=='YAGO15K':
         Numericals = [i[:-1].split(' ') if '\t' not in i else i[:-1].split('\t') for i in Numericals]
         Numericals = [(ent2id[i[0]], db_str(i[1]), db_time(i[2])) for i in Numericals]
-    
+    elif data=='oea':
+        Numericals = [i[:-1].split('\t') for i in Numericals]
+        Numericals = [(ent2id[i[0]], dbp_str(i[1]), dbp_value(i[2])) for i in Numericals]
     else:
         Numericals = [i[:-1].split(' ') if '\t' not in i else i[:-1].split('\t') for i in Numericals]
         Numericals = [(ent2id[i[0][1:-1]], dbp_str(i[1]), dbp_value(' '.join(i[2:]))) for i in Numericals]
