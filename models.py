@@ -173,17 +173,16 @@ class MASGNN(torch.nn.Module):
             self.textMLP = MLP(in_channels=2*params.text_dim, out_channels=self.hidden_dim,
                        hidden_channels=params.MLP_hidden_dim, num_layers=params.MLP_num_layers,
                        dropout=[params.MLP_dropout]*params.MLP_num_layers, norm=None)
-            self.ImgMLP = MLP(in_channels=params.img_dim, out_channels=self.hidden_dim,
+            self.ImgMLP = MLP(in_channels=params.img_dim, out_channels=1,
                         hidden_channels=params.MLP_hidden_dim, num_layers=params.MLP_num_layers,
                        dropout=[params.MLP_dropout]*params.MLP_num_layers, norm=None)
 
 
     def forward(self, subs, mode='train',batch_idx=None):
-        if self.mm:
+        # if self.mm:
             # features, mean_feature = self.mmfeature(img_features=self.img_features, att_features=self.att_val_features,
             #                                         att_rel_features=self.att_rel_features(self.att2rel), att_ids=self.att_ids)
             # simlarity of att_rel_features use cosine shape (n_rel, n_rel)
-            rel_sim = torch.mm(self.att_rel_features.weight, self.att_rel_features.weight.T)
             # use self.att2rel to get simlarity from rel_sim , self.att2rel shape is n_att , attention shape is (n_att, n_att)
             # attention = rel_sim[torch.meshgrid(self.att2rel[:self.num_att_left], self.att2rel[self.num_att_left:])]
             # attention_l2r = scatter(attention, index=self.att_ids[self.num_att_left:]-self.left_num, dim=1, dim_size=self.n_ent-self.left_num, reduce='sum')
@@ -198,9 +197,10 @@ class MASGNN(torch.nn.Module):
 
             # features['IMG'] = features['IMG'] / torch.norm(features['IMG'], dim=-1, keepdim=True)
             # features['Text'] = features['Text'] / torch.norm(features['Text'], dim=-1, keepdim=True)
-            img_features = self.ImgMLP(self.img_features)
-            img_features = F.normalize(img_features)
-            sim_i = torch.mm(img_features[:self.left_num], img_features[self.left_num:].T)
+            
+            # img_features = self.ImgMLP(self.img_features)
+            # img_features = F.normalize(img_features)
+            # sim_i = torch.mm(img_features[:self.left_num], img_features[self.left_num:].T)
             # sim_t = torch.mm(features['Text'][:self.left_num], features['Text'][self.left_num:].T)
             # sim_m = sim_i+sim_t
             # select sim > 0.9 index
@@ -267,9 +267,18 @@ class MASGNN(torch.nn.Module):
         scores = self.W_final(hidden).squeeze(-1)
         
         scores_all = torch.zeros((len(subs), self.loader.n_ent)).cuda()  # non_visited entities have 0 scores
-        scores_all[[nodes[:, 0], nodes[:, 1]]] = scores
+        scores_all[[nodes[:, 0], nodes[:, 1]]] = scores 
+        
 
         if self.mm:
+            source,target = torch.meshgrid(q_sub, torch.arange(self.n_ent).cuda())
+            hidden = self.img_features[source] * self.img_features[target]
+            b,_ = torch.meshgrid(torch.arange(n).cuda(), torch.arange(self.n_ent).cuda())
+            img_scores = self.ImgMLP(hidden).squeeze(-1)
+            scores_all[[b, target]] += img_scores
+            
+            rel_sim = torch.mm(self.att_rel_features.weight, self.att_rel_features.weight.T)
+
             for i,sub in enumerate(subs):
                 if sub not in self.ids_att:
                     continue
@@ -289,7 +298,7 @@ class MASGNN(torch.nn.Module):
                     right_att_feat = right_att_feat.unsqueeze(0)#(1,right_att_all,dim)
                     right_feat = scatter(alpha_r2l.unsqueeze(-1) * right_att_feat,index=self.att_ids[self.num_att_left:]-self.left_num,dim=1,dim_size=self.n_ent-self.left_num,reduce='sum')#(1,right_ent,dim)
                     
-                    scores_all[i,self.left_num:] = scores_all[i,self.left_num:]+torch.cosine_similarity(left_feat.squeeze(0), right_feat.squeeze(0), dim=1)+sim_i[sub,:]
+                    scores_all[i,self.left_num:] = scores_all[i,self.left_num:]+torch.cosine_similarity(left_feat.squeeze(0), right_feat.squeeze(0), dim=1)#+sim_i[sub,:]
                 else:
                     attention = rel_sim[torch.meshgrid(self.att2rel[:self.num_att_left], self.att2rel[self.ids_att[sub]])]
                     attention_l2r = scatter(attention, index=torch.zeros(self.ids_att[sub].shape).long().cuda(), dim=1, dim_size=1, reduce='sum')
@@ -306,7 +315,7 @@ class MASGNN(torch.nn.Module):
                     right_att_feat = right_att_feat.repeat(self.left_num,1,1)#(left_ent,right_att_sub , dim)
                     right_feat = scatter(alpha_r2l.unsqueeze(-1) * right_att_feat,index=torch.zeros(self.ids_att[sub].shape).long().cuda(),dim=1,dim_size=1,reduce='sum')#(left_ent,1,dim)
                     
-                    scores_all[i,:self.left_num] = scores_all[i,:self.left_num] + torch.cosine_similarity(left_feat.squeeze(1), right_feat.squeeze(1), dim=1)+sim_i[:,sub-self.left_num]
+                    scores_all[i,:self.left_num] = scores_all[i,:self.left_num] + torch.cosine_similarity(left_feat.squeeze(1), right_feat.squeeze(1), dim=1)#+sim_i[:,sub-self.left_num]
 
 
         return scores_all

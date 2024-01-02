@@ -10,5 +10,5 @@ cp *.py results/${expn}/backup/
 
 for split in $splits ; do
   echo "sbatch ${split}"
-  sbatch -o OEA_${expn}_${split}.log run_oea.slurm 4 5 0.001 ${split} ${expn}
+  sbatch -o OEA_${expn}_${split}.log run_oea.slurm 4 7 0.001 ${split} ${expn}
 done
