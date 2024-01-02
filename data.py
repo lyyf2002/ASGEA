@@ -71,49 +71,45 @@ def load_eva_data(args):
     ENT_NUM = len(ent2id_dict)
     REL_NUM = len(r_hs)
     np.random.shuffle(ills)
-    if args.data_choice == "OpenEA":
-        img_vec_path = osp.join(args.data_path, f"OpenEA/pkl/{args.data_split}_id_img_feature_dict.pkl")
-    elif "FB" in file_dir:
-        img_vec_path = osp.join(args.data_path, f"pkls/{args.data_choice}_id_img_feature_dict.pkl")
-    else:
-        # fr_en
-        split = file_dir.split("/")[-1]
-        img_vec_path = osp.join(args.data_path, "pkls", args.data_split + "_GA_id_img_feature_dict.pkl")
+    if args.mm:
+        if args.data_choice == "OpenEA":
+            img_vec_path = osp.join(args.data_path, f"OpenEA/pkl/{args.data_split}_id_img_feature_dict.pkl")
+        elif "FB" in file_dir:
+            img_vec_path = osp.join(args.data_path, f"pkls/{args.data_choice}_id_img_feature_dict.pkl")
+        else:
+            # fr_en
+            split = file_dir.split("/")[-1]
+            img_vec_path = osp.join(args.data_path, "pkls", args.data_split + "_GA_id_img_feature_dict.pkl")
 
-    assert osp.exists(img_vec_path)
-    img_features = load_img(ENT_NUM, img_vec_path)
-    print(f"image feature shape:{img_features.shape}")
+        assert osp.exists(img_vec_path)
+        img_features = load_img(ENT_NUM, img_vec_path)
+        print(f"image feature shape:{img_features.shape}")
 
-    if args.word_embedding == "glove":
-        word2vec_path = os.path.join(args.data_path, "embedding", "glove.6B.300d.txt")
-    elif args.word_embedding == 'bert':
-        pass
+        if args.word_embedding == "glove":
+            word2vec_path = os.path.join(args.data_path, "embedding", "glove.6B.300d.txt")
+        elif args.word_embedding == 'bert':
+            pass
+        else:
+            raise Exception("error word embedding")
     else:
-        raise Exception("error word embedding")
+        img_features = None
 
     name_features = None
     char_features = None
-    if args.data_choice == "DBP15K" and (args.w_name or args.w_char):
+    # if args.data_choice == "DBP15K" and (args.w_name or args.w_char):
 
-        assert osp.exists(word2vec_path)
-        ent_vec, char_features = load_word_char_features(ENT_NUM, word2vec_path, args)
-        name_features = F.normalize(torch.Tensor(ent_vec))
-        char_features = F.normalize(torch.Tensor(char_features))
-        print(f"name feature shape:{name_features.shape}")
-        print(f"char feature shape:{char_features.shape}")
-
-    if args.unsup:
-        mode = args.unsup_mode
-        if mode == "char":
-            input_features = char_features
-        elif mode == "name":
-            input_features = name_features
-        else:
-            input_features = F.normalize(torch.Tensor(img_features))
-
-        train_ill = visual_pivot_induction(args, left_ents, right_ents, input_features, ills)
-    else:
-        train_ill = np.array(ills[:int(len(ills) // 1 * args.data_rate)], dtype=np.int32)
+    #     assert osp.exists(word2vec_path)
+    #     ent_vec, char_features = load_word_char_features(ENT_NUM, word2vec_path, args)
+    #     name_features = F.normalize(torch.Tensor(ent_vec))
+    #     char_features = F.normalize(torch.Tensor(char_features))
+    #     print(f"name feature shape:{name_features.shape}")
+    #     print(f"char feature shape:{char_features.shape}")
+    img_ill = None
+    if args.mm:
+        input_features = F.normalize(torch.Tensor(img_features))
+        img_ill = visual_pivot_induction(args, left_ents, right_ents, input_features, ills)
+    
+    train_ill = np.array(ills[:int(len(ills) // 1 * args.data_rate)], dtype=np.int32)
 
     test_ill_ = ills[int(len(ills) // 1 * args.data_rate):]
     test_ill = np.array(test_ill_, dtype=np.int32)
@@ -173,7 +169,8 @@ def load_eva_data(args):
         'input_idx': input_idx,
         'triples': triples,
         'id2name':id2name,
-        'id2rel':id2rel
+        'id2rel':id2rel,
+        'img_ill':img_ill
     }, {"left": left_non_train, "right": right_non_train},left_ents,right_ents, train_ill, test_ill, eval_ill, test_ill_
 
 
