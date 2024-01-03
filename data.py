@@ -442,14 +442,16 @@ def dbp_str(s):
     
 
 def dbp_value(s):
+    print(s)
     if '^^' in s:
         s = s.split("^^")[0]
         if ('<' == s[0] and '>' == s[-1]) or ('\"' == s[0] and '\"' == s[-1]):
             s = s[1:-1]
     elif '@' in s and s.index('@')>0:
-        s = s.split('@')[0]
+        s = '@'.join(s.split('@')[:-1])
         if ('<' == s[0] and '>' == s[-1]) or ('\"' == s[0] and '\"' == s[-1]):
             s = s[1:-1]
+        print(s)
         if s[-1]=='\"':
             s = s[:-1]
     else:
