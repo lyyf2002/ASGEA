@@ -170,9 +170,10 @@ class MASGNN(torch.nn.Module):
             self.ids_att = {k:torch.LongTensor(v).cuda() for k,v in self.loader.ids_att.items()}
             self.att2rel = torch.LongTensor(self.loader.att2rel).cuda()
             self.mmfeature = MMFeature(self.n_ent, params)
-            self.textMLP = MLP(in_channels=2*params.text_dim, out_channels=self.hidden_dim,
+            self.textMLP = MLP(in_channels=params.hidden_dim, out_channels=1,
                        hidden_channels=params.MLP_hidden_dim, num_layers=params.MLP_num_layers,
                        dropout=[params.MLP_dropout]*params.MLP_num_layers, norm=None)
+            self.textW = nn.Linear(2*params.text_dim, params.hidden_dim)
             self.ImgMLP = MLP(in_channels=params.img_dim, out_channels=1,
                         hidden_channels=params.MLP_hidden_dim, num_layers=params.MLP_num_layers,
                        dropout=[params.MLP_dropout]*params.MLP_num_layers, norm=None)
@@ -289,16 +290,18 @@ class MASGNN(torch.nn.Module):
                     alpha_l2r = softmax(attention_l2r, torch.zeros(self.ids_att[sub].shape).long().cuda(), None, 1,0)
                     alpha_r2l = softmax(attention_r2l, self.att_ids[self.num_att_left:]-self.left_num, None, self.n_ent-self.left_num,-1)
                     left_att_feat = torch.cat((self.att_rel_features(self.att2rel[self.ids_att[sub]]),self.att_val_features[self.ids_att[sub]]),-1)
-                    left_att_feat = self.textMLP(left_att_feat)
+                    left_att_feat = self.textW(left_att_feat)
                     left_att_feat = left_att_feat.unsqueeze(1)#(left_att_sub , 1 , dim)
                     left_att_feat = left_att_feat.repeat(1,self.n_ent-self.left_num,1)#(left_att_sub , right_ent , dim)
                     left_feat = scatter(alpha_l2r.unsqueeze(-1) * left_att_feat, index=torch.zeros(self.ids_att[sub].shape).long().cuda(), dim=0, dim_size=1, reduce='sum')#(1 , right_ent , dim)
                     right_att_feat = torch.cat((self.att_rel_features(self.att2rel[self.num_att_left:]),self.att_val_features[self.num_att_left:]),-1)#(right_att_all,dim)
-                    right_att_feat = self.textMLP(right_att_feat)
+                    right_att_feat = self.textW(right_att_feat)
                     right_att_feat = right_att_feat.unsqueeze(0)#(1,right_att_all,dim)
                     right_feat = scatter(alpha_r2l.unsqueeze(-1) * right_att_feat,index=self.att_ids[self.num_att_left:]-self.left_num,dim=1,dim_size=self.n_ent-self.left_num,reduce='sum')#(1,right_ent,dim)
+                    text_feat = left_feat.squeeze(0) * right_feat.squeeze(0)
+                    text_scores = self.textMLP(text_feat) 
                     
-                    scores_all[i,self.left_num:] = scores_all[i,self.left_num:]+torch.cosine_similarity(left_feat.squeeze(0), right_feat.squeeze(0), dim=1)#+sim_i[sub,:]
+                    scores_all[i,self.left_num:] = scores_all[i,self.left_num:]+text_scores.squeeze(-1)
                 else:
                     attention = rel_sim[torch.meshgrid(self.att2rel[:self.num_att_left], self.att2rel[self.ids_att[sub]])]
                     attention_l2r = scatter(attention, index=torch.zeros(self.ids_att[sub].shape).long().cuda(), dim=1, dim_size=1, reduce='sum')
@@ -306,16 +309,17 @@ class MASGNN(torch.nn.Module):
                     alpha_l2r = softmax(attention_l2r, self.att_ids[:self.num_att_left], None, self.left_num,0) #(left_att_all,1)
                     alpha_r2l = softmax(attention_r2l, torch.zeros(self.ids_att[sub].shape).long().cuda(), None, 1,-1)#(left_ent,right_att_sub)
                     left_att_feat = torch.cat((self.att_rel_features(self.att2rel[:self.num_att_left]),self.att_val_features[:self.num_att_left]),-1)#(left_att_all,dim)
-                    left_att_feat = self.textMLP(left_att_feat)
+                    left_att_feat = self.textW(left_att_feat)
                     left_att_feat = left_att_feat.unsqueeze(1)#(left_att_all,1,dim)
                     left_feat = scatter(alpha_l2r.unsqueeze(-1) * left_att_feat, index=self.att_ids[:self.num_att_left], dim=0, dim_size=self.left_num, reduce='sum')#(left_ent,1,dim)
                     right_att_feat = torch.cat((self.att_rel_features(self.att2rel[self.ids_att[sub]]),self.att_val_features[self.ids_att[sub]]),-1)#(right_att_sub , dim)
-                    right_att_feat = self.textMLP(right_att_feat)
+                    right_att_feat = self.textW(right_att_feat)
                     right_att_feat = right_att_feat.unsqueeze(0)#(1,right_att_sub , dim)
                     right_att_feat = right_att_feat.repeat(self.left_num,1,1)#(left_ent,right_att_sub , dim)
                     right_feat = scatter(alpha_r2l.unsqueeze(-1) * right_att_feat,index=torch.zeros(self.ids_att[sub].shape).long().cuda(),dim=1,dim_size=1,reduce='sum')#(left_ent,1,dim)
-                    
-                    scores_all[i,:self.left_num] = scores_all[i,:self.left_num] + torch.cosine_similarity(left_feat.squeeze(1), right_feat.squeeze(1), dim=1)#+sim_i[:,sub-self.left_num]
+                    text_feat = left_feat.squeeze(1) * right_feat.squeeze(1)
+                    text_scores = self.textMLP(text_feat) 
+                    scores_all[i,:self.left_num] = scores_all[i,:self.left_num] + text_scores.squeeze(-1)
 
 
         return scores_all
