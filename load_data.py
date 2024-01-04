@@ -30,7 +30,8 @@ class DataLoader:
         # old2new[old_ids] = new_ids
         # self.old2new = old2new
         self.old_ids = old_ids
-        self.images_list = self.images_list[self.old_ids]
+        if args.mm:
+            self.images_list = self.images_list[self.old_ids]
         self.old2new_dict = {oldid:newid for newid,oldid in enumerate(left_ents+right_ents)}
         triples = KGs['triples']
         triples = [(self.old2new_dict[tri[0]],tri[1],self.old2new_dict[tri[2]]) for tri in triples]
@@ -95,8 +96,7 @@ class DataLoader:
         #         for f2i in f2:
         #             print(f1i.dot(f2i))
 
-        self.name_features = KGs['name_features']
-        self.char_features = KGs['char_features']
+
         
 
 
