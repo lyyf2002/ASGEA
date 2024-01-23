@@ -15,6 +15,8 @@ class DataLoader:
         KGs, non_train, left_ents, right_ents, train_ill, test_ill, eval_ill, test_ill_ = load_eva_data(args)
         ent_num = KGs['ent_num']
         rel_num = KGs['rel_num']
+        self.img_ill = KGs['img_ill']
+        self.use_img_ill = args.use_img_ill
         self.images_list = KGs['images_list']
         self.rel_features = KGs['rel_features']
         self.att_features = KGs['att_features']
@@ -37,6 +39,8 @@ class DataLoader:
         triples = [(self.old2new_dict[tri[0]],tri[1],self.old2new_dict[tri[2]]) for tri in triples]
         train_ill = np.array([(self.old2new_dict[tri[0]],self.old2new_dict[tri[1]]) for tri in train_ill])
         test_ill = np.array([(self.old2new_dict[tri[0]],self.old2new_dict[tri[1]]) for tri in test_ill])
+        if args.mm:
+            self.img_ill = np.array([(self.old2new_dict[tri[0]],self.old2new_dict[tri[1]]) for tri in self.img_ill])
         
         
         # self.att_features_text = np.array(KGs['att_features'])
@@ -119,6 +123,11 @@ class DataLoader:
         self.test_data = np.array(self.test_data)
         self.train_data = self.double_triple(self.train_triple, ill=True)
         self.train_data = np.array(self.train_data)
+        if self.use_img_ill:
+            self.img_ill_triple = self.img_ill2triples(self.img_ill)
+            self.img_ill_triple = self.double_triple(self.img_ill_triple, ill=True)
+            self.img_ill_triple = np.array(self.img_ill_triple)
+            self.img_ill_data = torch.LongTensor(self.img_ill_triple).cuda()
 
         # self.KG,self.M_sub = self.load_graph(self.fact_data) # do it in shuffle_train
         self.tKG = self.load_graph(self.fact_data + self.double_triple(self.train_triple, ill=True))
@@ -225,6 +234,9 @@ class DataLoader:
 
     def ill2triples(self, ill):
         return [(i[0], self.n_rel * 2 + 1, i[1]) for i in ill]
+    
+    def img_ill2triples(self, ill):
+        return [(i[0], self.n_rel * 2 + 3, i[1]) for i in ill]
 
     # def read_triples(self, filename):
     #     triples = []
@@ -302,6 +314,8 @@ class DataLoader:
             KG = self.tKG
         if sim is not None:
             KG = torch.cat((KG, sim), dim=0)
+        if self.use_img_ill:
+            KG = torch.cat((KG, self.img_ill_data), dim=0)
         row, col = KG[:, 0], KG[:, 2]
         node_mask = row.new_empty(self.n_ent, dtype=torch.bool)
         # edge_mask = row.new_empty(row.size(0), dtype=torch.bool)

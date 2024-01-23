@@ -107,8 +107,8 @@ parser.add_argument("--csls_k", type=int, default=10, help="top k for csls")
 parser.add_argument("--il", action="store_true", default=False, help="Iterative learning?")
 parser.add_argument("--semi_learn_step", type=int, default=10, help="If IL, what's the update step?")
 parser.add_argument("--il_start", type=int, default=500, help="If Il, when to start?")
-parser.add_argument("--unsup", action="store_true", default=False)
-parser.add_argument("--unsup_k", type=int, default=1000, help="|visual seed|")
+parser.add_argument("--use_img_ill", action="store_true", default=False)
+parser.add_argument("--img_ill_k", type=int, default=1000, help="|visual seed|")
 
 # --------- MCLEA -----------
 parser.add_argument("--unsup_mode", type=str, default="img", help="unsup mode", choices=["img", "name", "char"])

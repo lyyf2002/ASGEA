@@ -275,7 +275,7 @@ def visual_pivot_induction(args, left_ents, right_ents, img_features, ills):
     r_img_f = img_features[right_ents]  # right images
 
     img_sim = l_img_f.mm(r_img_f.t())
-    topk = args.unsup_k
+    topk = args.img_ill_k
     two_d_indices = get_topk_indices(img_sim, topk * 100)
     del l_img_f, r_img_f, img_sim
 
@@ -442,7 +442,7 @@ def dbp_str(s):
     
 
 def dbp_value(s):
-    print(s)
+    # print(s)
     if '^^' in s:
         s = s.split("^^")[0]
         if ('<' == s[0] and '>' == s[-1]) or ('\"' == s[0] and '\"' == s[-1]):
@@ -451,7 +451,7 @@ def dbp_value(s):
         s = '@'.join(s.split('@')[:-1])
         if ('<' == s[0] and '>' == s[-1]) or ('\"' == s[0] and '\"' == s[-1]):
             s = s[1:-1]
-        print(s)
+        # print(s)
         if s[-1]=='\"':
             s = s[:-1]
     else:
