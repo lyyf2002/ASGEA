@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/lyyf2002/ASGEA/blob/main/IMG/logo.png" alt="Logo" width="400">
+  <img src="https://github.com/lyyf2002/ASGEA/blob/master/IMG/logo.png" alt="Logo" width="400">
 </div>
 
 # 🏕️ [ASGEA: Exploiting Logic Rules from Align-Subgraphs for Entity Alignment](https://arxiv.org/abs/2402.11000)
@@ -11,9 +11,9 @@
 
 >This paper proposes the Align-Subgraph Entity Alignment (ASGEA) framework to exploit logic rules from Align-Subgraphs. ASGEA uses anchor links as bridges to construct Align-Subgraphs and spreads along the paths across KGs, which distinguishes it from the embedding-based methods.
 
-<!--<div align="center">
-    <img src="https://github.com/lyyf2002/ASGEA/blob/main/IMG/model.jpg" width="95%" height="auto" />
-</div> -->
+<div align="center">
+    <img src="https://github.com/lyyf2002/ASGEA/blob/master/IMG/model.jpg" width="95%" height="auto" />
+</div>
 
 
 ## 🔬 Dependencies
