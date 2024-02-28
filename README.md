@@ -1,4 +1,5 @@
 # ASGEA
+
 ## 🔬 Dependencies
 ```
 pytorch 1.12.0
@@ -13,11 +14,11 @@ transformers 4.26.1
 
 ```bash
 # FBDB15K & FBYG15K
->> bash run.sh
+>> bash run.sh FB
 # DBP15K
->> bash run_dbp.sh
+>> bash run_dbp.sh DBP
 # Multi OpenEA
->> bash run_oea.sh
+>> bash run_oea.sh OEA
 ```
 
 - **❗tips**: If you are using slurm, you can change the `.sh` file from
@@ -78,6 +79,8 @@ ROOT
 
 #### Code Path
 
+<details>
+    <summary>👈 🔎 Click</summary>
 
 ```
 ASGEA
@@ -101,6 +104,8 @@ ASGEA
 </details>
 
 #### Data Path
+<details>
+    <summary>👈 🔎 Click</summary>
 
 ```
 mmkg                                                         
