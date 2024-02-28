@@ -67,6 +67,7 @@ transformers 4.26.1
 
 
 ## 📚 Dataset
+❗NOTE: Download from [ufile](https://ufile.io/kzkkfayd) (1.69G) and unzip it to make those files satisfy the following file hierarchy:
 
 ```
 ROOT
