@@ -421,3 +421,23 @@ mmkg
 ```
 
 </details>
+
+## 🤝 Cite:
+
+Please condiser citing this paper if you use the ```code``` or ```data``` from our work.
+Thanks a lot :)
+```
+@article{DBLP:journals/corr/abs-2402-11000,
+  author       = {Yangyifei Luo and
+                  Zhuo Chen and
+                  Lingbing Guo and
+                  Qian Li and
+                  Wenxuan Zeng and
+                  Zhixin Cai and
+                  Jianxin Li},
+  title        = {{ASGEA:} Exploiting Logic Rules from Align-Subgraphs for Entity Alignment},
+  journal      = {CoRR},
+  volume       = {abs/2402.11000},
+  year         = {2024}
+}
+```
