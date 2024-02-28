@@ -9,6 +9,7 @@ fi
 cp *.py results/${expn}/backup/
 
 for split in $splits ; do
-  echo "sbatch ${split}"
-  sbatch -o OEA_${expn}_${split}.log run_oea.slurm 4 7 0.001 ${split} ${expn}
+  python train.py --n_batch 4 --n_layer 7 --lr 0.001 --data_choice OpenEA --data_rate 0.2 --img_dim 512 --topk 0 --data_split ${split} --exp_name ${expn} --mm 1
+  # echo "sbatch ${split}"
+  # sbatch -o OEA_${expn}_${split}.log run_oea.slurm 4 7 0.001 ${split} ${expn}
 done
